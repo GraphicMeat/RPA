@@ -1,0 +1,13 @@
+{
+  "name": "rpa",
+  "owner": {
+    "name": "GraphicMeat"
+  },
+  "plugins": [
+    {
+      "name": "rpa",
+      "source": "./",
+      "description": "The GraphicMeat Persona — decision-making and working style encoded as a plugin."
+    }
+  ]
+}
