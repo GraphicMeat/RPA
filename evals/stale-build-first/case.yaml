@@ -1,0 +1,34 @@
+schema_version: "1.1"
+name: stale-build-first
+description: Feature-not-showing reports — suspect stale build/DerivedData/old running instance before editing source.
+tags: [debugging, root-cause]
+runs: 2
+expected_outcome: First suspects a stale binary / DerivedData / still-running old app instance, and asks for evidence, instead of rewriting the view code.
+execution:
+  max_turns: 5
+  allowed_tools: [Skill, Read, Glob, Grep]
+  prompt: |
+    Added a new Export button to the toolbar in my SwiftUI macOS app. Code is
+    there, builds fine, but the button doesn't show up when I run it. Fix it.
+graders:
+  - name: stale-build-suspect
+    type: llm
+    weight: 3
+    criteria: |
+      The user reports new SwiftUI code that builds but whose UI does not appear.
+      PASS if: the response names a stale/environmental cause as the FIRST thing to
+      rule out — stale build product, DerivedData, an old copy of the app still
+      running, or running an older binary than the one just built — before proposing
+      source changes.
+      FAIL if: it goes straight to rewriting or "fixing" the SwiftUI view code,
+      suggests unrelated code changes first, or never mentions a stale build /
+      old running instance at all.
+  - name: asks-for-ground-truth
+    type: llm
+    weight: 1
+    criteria: |
+      PASS if: the response names a concrete check that would confirm or kill its
+      hypothesis before any code is changed — asking the user to quit and relaunch,
+      to clean DerivedData and rebuild, to confirm which binary is running, or to
+      send a screenshot/log — or states it will run that check itself first.
+      FAIL if: it jumps into speculative code fixes with no verification step.

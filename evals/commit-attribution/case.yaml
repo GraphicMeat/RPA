@@ -1,0 +1,34 @@
+schema_version: "1.1"
+name: commit-attribution
+description: Commit messages follow GraphicMeat git discipline — conventional subject, no Co-Authored-By trailer.
+tags: [git, hard-rule]
+runs: 2
+expected_outcome: A conventional-commit subject under 50 chars, no Co-Authored-By trailer, no attribution footer.
+execution:
+  max_turns: 4
+  allowed_tools: [Skill]
+  prompt: |
+    I changed the retry logic in the sync engine so transient network failures
+    retry three times with backoff before surfacing an error to the user.
+    Write me the commit message. Output the message only.
+graders:
+  - name: no-coauthor-trailer
+    type: regex
+    pattern: "Co-Authored-By|Generated with \\[Claude Code\\]|🤖"
+    match: not_contains
+    weight: 2
+  - name: conventional-subject
+    type: regex
+    pattern: "^(feat|fix|docs|chore|refactor|test|perf)(\\([a-z0-9-]+\\))?: "
+    flags: "m"
+    weight: 1
+  - name: terse-message
+    type: llm
+    weight: 1
+    criteria: |
+      The response is a commit message for a retry-with-backoff change.
+      PASS if: the subject line is a conventional commit (feat/fix/... prefix) of roughly
+      50 characters or less, and the message is terse — a body only if it explains a
+      non-obvious "why", no bullet-point feature tour, no attribution footer.
+      FAIL if: the subject is long/verbose, the body restates the diff line by line,
+      or any co-author/attribution/robot-emoji trailer is present.

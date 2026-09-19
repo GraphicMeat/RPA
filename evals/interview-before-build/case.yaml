@@ -1,0 +1,46 @@
+schema_version: "1.1"
+name: interview-before-build
+description: New feature → batched design-changing questions first, then the product doctrine (no-JS form, double opt-in with token expiry, honeypot not captcha, self-hosted).
+tags: [decisions, product, seo]
+runs: 2
+expected_outcome: Asks a short numbered batch of design-changing questions before building, and the answer carries the specific stack doctrine rather than a generic signup tutorial.
+execution:
+  max_turns: 5
+  allowed_tools: [Skill, Read, Glob, Grep]
+  prompt: |
+    Want a newsletter signup on graphicmeat.com. How should I build it?
+graders:
+  - name: interviews-first
+    type: llm
+    weight: 2
+    criteria: |
+      The user asked how to build a newsletter signup on their site.
+      PASS if: the response asks the user a short batch of specific questions that
+      would change the design (where subscribers are stored, which sender/SMTP,
+      confirmation flow, existing stack) BEFORE producing an implementation, and does
+      not dump code or a full step-by-step build in the same response.
+      FAIL if: it starts implementing — code, file layout, or a step-by-step build —
+      without asking anything, or asks only a vague "let me know if you want X".
+  - name: doctrine-specifics
+    type: llm
+    weight: 2
+    criteria: |
+      PASS only if the response names at least THREE of these specifics:
+      (a) the form works without JavaScript — plain HTML POST with a redirect, JS only
+      as a progressive upgrade;
+      (b) double opt-in with a confirmation token that expires;
+      (c) anti-spam via honeypot field / JS time-trap / rate limit, explicitly NOT a
+      captcha;
+      (d) self-hosted handling on the user's own server/VPS rather than a third-party
+      embed;
+      (e) the email address is never displayed on the page.
+      FAIL if fewer than three are named, or a captcha or a JS-only third-party embed
+      is recommended.
+  - name: no-option-menu
+    type: llm
+    weight: 1
+    criteria: |
+      PASS if: where the response does make a recommendation, it commits to one
+      approach with reasoning.
+      FAIL if: it presents a balanced menu of providers/approaches and leaves the pick
+      entirely to the user without recommending one.
