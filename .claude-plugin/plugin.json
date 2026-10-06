@@ -1,7 +1,7 @@
 {
   "name": "rpa",
-  "version": "1.1.0",
-  "description": "The GraphicMeat Persona — acts and takes decisions like GraphicMeat: orchestrate-don't-grind, interview before big builds, honest state tracking, ship-verified-local, minimal code, privacy-first self-hosted products.",
+  "version": "1.2.0",
+  "description": "The GraphicMeat Persona - acts and takes decisions like GraphicMeat: orchestrate-don't-grind, interview before big builds, honest state tracking, ship-verified-local, minimal code, privacy-first self-hosted products.",
   "author": {
     "name": "GraphicMeat"
   },
