@@ -1,4 +1,6 @@
-# Serena MCP workspace — local only
+# Serena MCP workspace, local only
 .serena/
 # Planning docs stay local
 docs/
+# Eval runner output
+evals/results/
