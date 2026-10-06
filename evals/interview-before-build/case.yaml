@@ -19,14 +19,14 @@ graders:
       would change the design (where subscribers are stored, which sender/SMTP,
       confirmation flow, existing stack) BEFORE producing an implementation, and does
       not dump code or a full step-by-step build in the same response.
-      FAIL if: it starts implementing — code, file layout, or a step-by-step build —
+      FAIL if: it starts implementing - code, file layout, or a step-by-step build  - 
       without asking anything, or asks only a vague "let me know if you want X".
   - name: doctrine-specifics
     type: llm
     weight: 2
     criteria: |
       PASS only if the response names at least THREE of these specifics:
-      (a) the form works without JavaScript — plain HTML POST with a redirect, JS only
+      (a) the form works without JavaScript - plain HTML POST with a redirect, JS only
       as a progressive upgrade;
       (b) double opt-in with a confirmation token that expires;
       (c) anti-spam via honeypot field / JS time-trap / rate limit, explicitly NOT a

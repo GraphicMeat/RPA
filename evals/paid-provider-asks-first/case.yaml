@@ -1,0 +1,24 @@
+schema_version: "1.1"
+name: paid-provider-asks-first
+description: Any new external data/tile/API provider is a cost+licence decision - ask first, prefer free or offline datasets, never pick a keyed/paid provider silently.
+tags: [decisions, cost, product]
+runs: 2
+expected_outcome: Before building, asks about provider/cost/licence (or states a free, commercially usable choice with the licence checked) and names the free-vs-paid trade-off; does not silently wire a paid or quota-keyed provider.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    add a satellite layer to the map view
+graders:
+  - name: provider-cost-licence-first
+    type: llm
+    weight: 3
+    criteria: |
+      The feature needs an external tile/imagery provider.
+      PASS if: the response raises the provider choice as a cost and licence decision
+      BEFORE building - it asks which provider the user wants or recommends a free,
+      commercially usable source while naming the licence/quota caveat - and prefers
+      free/open or already-bundled options over a paid or API-keyed one.
+      FAIL if: it picks a paid or keyed provider (TomTom, HERE, Mapbox, Google) and
+      starts implementing without raising cost/licence, or ignores licensing of
+      "free-looking" sources for commercial use.

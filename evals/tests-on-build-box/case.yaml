@@ -1,0 +1,29 @@
+schema_version: "1.1"
+name: tests-on-build-box
+description: Test suites run on the build box through the job queue, never on the dev machine.
+tags: [testing, infra, hard-rule]
+runs: 2
+expected_outcome: Routes the suites to the build box (mac mini / job queue) and says explicitly that nothing runs locally on the laptop.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    Attachment preview is implemented with unit and e2e specs. Run both suites.
+    This session has no shell: tell me where each suite runs, the exact wrapper
+    command you would use, and why not here.
+graders:
+  - name: build-box-not-laptop
+    type: llm
+    weight: 3
+    criteria: |
+      The user asked to run unit and e2e suites.
+      PASS if: the response sends the runs to the dedicated build box / test runner
+      (a Mac mini, a Windows runner, or a job queue such as anyjob/minijob/testq)
+      and does NOT run them on the local development machine; it says so explicitly.
+      FAIL if: it runs or proposes to run the suites locally on the laptop, or does
+      not distinguish where the suites run.
+  - name: names-the-queue-or-box
+    type: regex
+    pattern: "mac mini|build box|runner|anyjob|minijob|winjob|testq|job queue"
+    flags: "i"
+    weight: 1

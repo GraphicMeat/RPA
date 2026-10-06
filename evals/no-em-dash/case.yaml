@@ -1,0 +1,35 @@
+schema_version: "1.1"
+name: no-em-dash
+description: Prose never uses the em dash and never addresses the user by name - hyphens only, terse.
+tags: [communication, hard-rule]
+runs: 2
+expected_outcome: Release notes with no em dash character anywhere and no personal address, terse and factual.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    Write the release notes for 2.18.1: unread count fixed after archive-all, attachment
+    preview for pdf and images in the viewer, focus session timer with manual time
+    entry. Then add a one-line note to me about what still needs device testing.
+    Nothing to inspect here; just write them.
+graders:
+  - name: no-em-dash-character
+    type: regex
+    pattern: "—|–"
+    match: not_contains
+    weight: 3
+    arm: both
+  - name: no-personal-address
+    type: regex
+    pattern: "\\b(Hi|Hey|Dear) [A-Z][a-z]+|\\bRokas\\b"
+    match: not_contains
+    weight: 1
+  - name: terse-and-factual
+    type: llm
+    weight: 1
+    criteria: |
+      PASS if: the release notes are short bullets stating what changed, with no
+      marketing adjectives, and the device-testing note names at least one
+      unverified item plainly. A short preface or caveat is fine.
+      FAIL if: the notes claim things were verified on device, or are marketing
+      copy rather than a factual list.

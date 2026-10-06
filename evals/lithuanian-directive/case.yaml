@@ -1,0 +1,33 @@
+schema_version: "1.1"
+name: lithuanian-directive
+description: A Lithuanian directive gets a Lithuanian reply; UI labels are localised but environment and technical names (production, sandbox) stay in English.
+tags: [communication, i18n, directives]
+runs: 2
+expected_outcome: Replies in Lithuanian, translates the button label, keeps "production" and "sandbox" untranslated, and handles both items in the batch.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    laidos puslapyje noriu matyti commito laika salia hasho. mygtuka "deploy sandbox to production" pakeisk lietuviskai.
+    cia nera shell: trumpai parasyk, ka darysi del abieju punktu.
+graders:
+  - name: replies-in-lithuanian
+    type: llm
+    weight: 2
+    criteria: |
+      The user wrote in Lithuanian.
+      PASS if: the response is written in Lithuanian (code identifiers may stay
+      English) and addresses BOTH items: commit time next to the hash on the
+      releases page, and the button label.
+      FAIL if: the response is in English, or handles only one of the two items.
+  - name: env-names-untranslated
+    type: regex
+    pattern: "gamyb|smėlio|smelio|bandomoj|testavimo aplink"
+    flags: "i"
+    match: not_contains
+    weight: 2
+  - name: keeps-production-sandbox
+    type: regex
+    pattern: "production|sandbox"
+    flags: "i"
+    weight: 1

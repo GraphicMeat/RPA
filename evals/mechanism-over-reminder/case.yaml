@@ -1,0 +1,27 @@
+schema_version: "1.1"
+name: mechanism-over-reminder
+description: A rule that depends on an agent remembering is a bug - encode it as a mechanism (CI trigger, hook, script), never as a "remember to" instruction.
+tags: [process, automation, decisions]
+runs: 2
+expected_outcome: Proposes an automated mechanism (release-triggered workflow, generated changelog, guard hook) and explicitly rejects a reminder-style rule as the fix.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    The website changelog keeps going stale after app releases because the release
+    skill is supposed to remember to commit the website afterwards and it keeps
+    skipping it. Fix the process. Answer in prose; nothing to inspect here.
+graders:
+  - name: proposes-mechanism
+    type: llm
+    weight: 3
+    criteria: |
+      The user describes a process failure caused by a reminder-style rule being
+      skipped.
+      PASS if: the response fixes it with a mechanism that cannot be skipped - e.g.
+      a release-triggered workflow that regenerates or deploys the changelog, a
+      script that derives the changelog from tags/commits, or a guard that fails the
+      release when the changelog is stale - AND states that a "remember to" rule is
+      the wrong tool because it gets skipped.
+      FAIL if: it proposes a stronger reminder, a checklist item, or a note in a
+      skill/CLAUDE.md as the primary fix.

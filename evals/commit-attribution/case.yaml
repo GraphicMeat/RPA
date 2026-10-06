@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: commit-attribution
-description: Commit messages follow GraphicMeat git discipline — conventional subject, no Co-Authored-By trailer.
+description: Commit messages follow GraphicMeat git discipline - conventional subject, no Co-Authored-By trailer.
 tags: [git, hard-rule]
 runs: 2
 expected_outcome: A conventional-commit subject under 50 chars, no Co-Authored-By trailer, no attribution footer.
@@ -28,7 +28,7 @@ graders:
     criteria: |
       The response is a commit message for a retry-with-backoff change.
       PASS if: the subject line is a conventional commit (feat/fix/... prefix) of roughly
-      50 characters or less, and the message is terse — a body only if it explains a
+      50 characters or less, and the message is terse - a body only if it explains a
       non-obvious "why", no bullet-point feature tour, no attribution footer.
       FAIL if: the subject is long/verbose, the body restates the diff line by line,
       or any co-author/attribution/robot-emoji trailer is present.

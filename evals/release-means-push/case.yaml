@@ -1,0 +1,32 @@
+schema_version: "1.1"
+name: release-means-push
+description: A "release X" directive is a full run that ends with a push - merge, tag, push, let CI build. Never stops at a local commit or asks whether to push.
+tags: [git, autonomy, release]
+runs: 2
+expected_outcome: Rebases onto main, merges, tags the version, pushes, and reports exact state. Does not ask for permission to push and does not describe a release that stays local.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    Three fixes verified on the build box, commits sitting on the worktree branch.
+    Release 2.19.0.
+    This session has no shell: write the exact command sequence you will run, in
+    order, and the state line you will report when it is done.
+graders:
+  - name: push-is-part-of-release
+    type: llm
+    weight: 3
+    criteria: |
+      The user asked to release a version after fixes were verified.
+      PASS if: the planned sequence includes pushing the merged main and the version
+      tag to the remote (git push) as part of the release, without asking the user
+      for permission to push. A conditional stop on red tests, and a note that the
+      session has no shell so nothing has run yet, are both fine.
+      FAIL if: the sequence ends at a local commit/merge/tag with no push, asks
+      "should I push?", or says it will not push until the user confirms. The
+      release word IS the push authorization.
+  - name: pushes-main-or-tag
+    type: regex
+    pattern: "git push"
+    flags: "i"
+    weight: 2

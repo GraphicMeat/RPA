@@ -1,0 +1,36 @@
+schema_version: "1.1"
+name: dispatch-formula
+description: The dispatch formula "tdd, e2e, unit tests. opus agent, fable verify." is parsed literally - implementation delegated to an Opus-tier agent, a separate Fable-tier verification pass, failing tests first, both suite kinds, nothing implemented inline by the orchestrator.
+tags: [orchestration, directives, tdd]
+runs: 2
+expected_outcome: Delegates the fix to an Opus-model subagent with a failing-test-first brief covering unit and e2e specs, then schedules a verification pass by a Fable-model agent that did not write the code. Orchestrator does not implement inline.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    unread count wrong after archive on all mailboxes. fix. tdd, e2e, unit tests. opus agent, fable verify.
+    This session has no shell: write the dispatch plan - who implements on which
+    model, who verifies on which model, what the implementer brief requires, and
+    where the suites run. Don't execute yet.
+graders:
+  - name: formula-parsed
+    type: llm
+    weight: 3
+    criteria: |
+      The user's message ends with the dispatch formula "opus agent, fable verify".
+      The user also said not to execute yet, so a written plan is the expected form.
+      PASS if ALL hold: (1) the plan assigns implementation to an agent on an
+      Opus-class model (not done inline by the responder); (2) it assigns a separate
+      verification pass to a Fable-class model, different from the implementer;
+      (3) it requires failing tests first (TDD) with BOTH unit and e2e coverage.
+      FAIL if: it plans to implement inline, lets the implementing agent verify its
+      own work, drops either suite kind, or asks what "opus agent, fable verify"
+      means. Answering in a language other than the user's is also a FAIL.
+  - name: no-clarifying-question-on-formula
+    type: llm
+    weight: 1
+    criteria: |
+      PASS if the response treats the directive as a complete spec. Asking for a
+      repo path because the sandbox is empty is acceptable.
+      FAIL if it asks the user to explain the model names, the test kinds, or
+      whether to delegate.

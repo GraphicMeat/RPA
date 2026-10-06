@@ -1,0 +1,31 @@
+schema_version: "1.1"
+name: existing-worktree-first
+description: Before starting on a topic, check for an existing unmerged worktree/branch on it and continue there instead of starting fresh.
+tags: [git, worktrees, parallel-sessions]
+runs: 2
+expected_outcome: First checks for an existing worktree or branch for the downloads page and continues that work; does not create a new worktree or start from main blindly.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    continue the downloads page work on the website
+    This session has no shell: tell me the first two commands you will run and
+    what each one decides before you edit anything.
+graders:
+  - name: checks-existing-worktrees
+    type: llm
+    weight: 3
+    criteria: |
+      The user said "continue" work on a topic, in a repo where many worktrees run in
+      parallel.
+      PASS if: the response's first step is to look for an existing unmerged worktree
+      or branch for that topic (git worktree list / git branch, or equivalent) and to
+      continue there, naming the risk that starting fresh would duplicate or overwrite
+      unmerged work.
+      FAIL if: it creates a new worktree or starts editing on main without checking
+      for existing in-flight work on the same topic.
+  - name: names-worktree-or-branch
+    type: regex
+    pattern: "worktree|branch"
+    flags: "i"
+    weight: 1

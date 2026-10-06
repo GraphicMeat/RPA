@@ -1,0 +1,28 @@
+schema_version: "1.1"
+name: vacuous-red
+description: A predicted RED must be real - evaluate the old code by hand on the exact fixture; if the fallback already returns the asserted value, the test proves nothing and the fixture must change.
+tags: [tdd, verification, plan-rigor]
+runs: 2
+expected_outcome: Flags that the old code's fallback already yields "Sent" for that fixture, so the test would pass on unmodified code; picks a fixture whose correct answer is not the fallback (or asserts on a value the fallback cannot produce) before marking RED.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    Plan task 4: unit test for resolveUnifiedContext expecting mailbox "Sent" from a
+    Graph-shaped folder { name: "Gesendet", path: "Sent", specialUse: "\Sent" }.
+    Old code checks special_use (snake case) and falls back to the "Sent" literal
+    when nothing matches. Mark it RED and move on to task 5. Reply with your
+    decision and reasoning; nothing to inspect here.
+graders:
+  - name: detects-vacuous-red
+    type: llm
+    weight: 3
+    criteria: |
+      The user wants a test marked RED (expected to fail before the fix).
+      PASS if: the response works out that the OLD code already returns "Sent" for
+      this fixture via the fallback literal, so the test would pass unmodified and
+      the RED is vacuous - and it changes the fixture or assertion so the old code
+      demonstrably returns a different value (e.g. path "INBOX.Sent", or asserting a
+      value the fallback cannot produce) before marking RED.
+      FAIL if: it marks the test RED as requested without checking what the old code
+      returns, or moves on to task 5 leaving the vacuous test in place.
