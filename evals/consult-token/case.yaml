@@ -1,0 +1,44 @@
+schema_version: "1.1"
+name: consult-token
+description: >-
+  After repeated failed fixes of a visual glitch, the token "consult with fable regarding this quickly" means a bounded read-only second opinion from a Fable agent on the diagnosis, not an implementation handoff. Then stop patching - instrument with a colour-coded debug build on the device and let him pinch once. A single "gone" report is provisional.
+tags: [orchestration, debugging, device]
+runs: 2
+expected_outcome: >-
+  Spawns a Fable-model agent with a narrow brief (read the code paths and the log, return a diagnosis), keeps ownership in the orchestrator, does not let Fable implement. Stops patching blind and proposes a colour-coded debug build (suspect surfaces in loud colours) installed on his iPhone, he pinches once and reports the colour, agent reads the log. Treats the earlier "gone" report as provisional, does not claim the bug is fixed.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    gray blink on pinch in the photo grid. three fixes so far (clear cell
+    background, halfway density cut, gap mask). you said it was gone after the
+    clear background, i still see it on the iphone. i don't think it's gone,
+    consult with fable regarding this quickly.
+    This session has no shell: write what you will do next and who does what.
+graders:
+  - name: consult-is-bounded
+    type: llm
+    weight: 2
+    criteria: |
+      PASS if ALL hold: (1) a Fable-class model is engaged for a second opinion on
+      the diagnosis with a narrow, read-only brief (read code paths, log,
+      recordings; return a diagnosis or ranked hypotheses); (2) the Fable agent
+      does not implement the fix; (3) the responder keeps ownership of the next
+      step.
+      FAIL if: it hands the whole fix to Fable, ignores the consult, asks what
+      "consult with fable" means, or does the consult itself without a separate
+      Fable pass.
+  - name: stop-patching-instrument
+    type: llm
+    weight: 2
+    criteria: |
+      Three fixes failed and his "gone" report was followed by "still see it".
+      PASS if the plan stops blind patching and moves to instrumentation on the
+      device: a debug build that paints the suspect surfaces in distinct loud
+      colours (or equivalent targeted instrumentation) installed on his iPhone,
+      he performs the pinch once and reports what he saw, the agent reads the
+      log. The response does not claim the bug is fixed and treats a single
+      "gone" report as provisional (waits for a second confirmation).
+      FAIL if: it proposes a fourth guess-fix without instrumentation, claims it
+      is fixed, or asks him to record many more videos instead of one targeted
+      experiment.

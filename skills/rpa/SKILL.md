@@ -18,23 +18,34 @@ problems and bridging technology gaps for people. Sees the bigger picture:
 app -> system -> user -> market.
 
 Live projects: MailVault (Rust/Tauri/React email archive; macOS, Windows,
-Linux snap; App Store + notarized DMG), MeatPad (SwiftUI macOS notes and code
-editor), PhotoBooks (SwiftUI iOS+macOS), MailMule (privacy-first IMAP
+Linux snap; App Store + notarized DMG; an opt-in native renderer replacing the
+WebView, JMAP storage in progress), MeatPad (SwiftUI macOS notes, code editor,
+terminal, kanban), PhotoBooks (SwiftUI iOS+macOS, free exports carry sponsor
+pages), ColdRoll (privacy-first iPhone-to-Mac photo backup: SwiftUI shared
+iOS+macOS package over a Rust engine, background transfers, subscription),
+RareTake (iOS-only teleprompter: on-device voice scrolling plus a live gaze
+coach; modular atomic-design UI, liquid glass), MailMule (privacy-first IMAP
 migration web app), Cleaver (CRM for his products: Fastify + React, passkey
 admin, SQLite), keyhole (local secret vault that leases keys to AI agents over
-MCP), a Shopify merch store with bundle apps, graphicmeat.com + meatlytics
-(self-hosted analytics), a Lithuanian-market studio brand with client
-platforms (logistics: TS/Fastify/MapLibre; construction estimating: DWG to 3D
-model to priced estimate, sandbox + production on one Hetzner box), a WW2
-bomber game (Flutter), a paid course on taking AI-built prototypes to
-production, and mini-server (Mac mini + Windows build box, job queue, minihub
-dashboard).
+MCP), shot-butcher (public skill + demo pages: App Store screenshots in 25
+persistent styles), a Shopify merch store with bundle apps, graphicmeat.com +
+meatlytics (self-hosted analytics with period comparison), a Lithuanian studio
+brand (own site, light only, red accents) with client platforms (logistics:
+TS/Fastify/MapLibre, AI document intake; construction estimating: DWG to 3D
+model to priced estimate, brigades schedule, leave requests, sandbox +
+production on one Hetzner box), a WW2 bomber game (Flutter), a paid course on
+taking AI-built prototypes to production, and mini-server (Mac mini + Windows
+build box, job queue, minihub dashboard).
 
 Working rhythm: many parallel Claude sessions a day, each in its own
-worktree on one topic; he merges them to main as they verify. Sessions are
-cheap, test suites are expensive and run on the build box. He batches fixes,
-releases, then tests the deployed build himself. He writes in English or
-Lithuanian depending on the project.
+worktree on one topic; they merge to LOCAL main as they verify and he pushes
+the day's batch once, because every push spends CI minutes (the quota ran dry
+in October). Sessions are cheap, test suites are expensive and run on the
+build box; mobile work is verified on his always-unlocked iPhone. He batches
+fixes, releases, then tests the deployed build himself. Marketing media (demo
+videos, localized clips, store screenshots) is produced on the build box with
+the same rigor as code. He writes in English or Lithuanian depending on the
+project, and hands plans to other sessions or to Codex.
 
 ## Decision framework
 
@@ -52,17 +63,35 @@ Lithuanian depending on the project.
    that plans and verifies sits one tier above the model that implements, and
    the verifier is never the implementer. His dispatch formula says it
    outright: "opus agent, fable verify", "opus plan, sonnet agent, opus
-   verify". Fable is reserved for verification and hard analysis when he
-   names it; never spawn top-tier agents for grunt work. Sequential agents by
+   verify", "opus plan, sonnet investigate, opus review plan", "Opus agent,
+   then verify". Opus is the daily driver (nine of ten October sessions),
+   Sonnet implements, Fable appears only when he names it: "fable verify" is
+   a verification pass, "consult with fable regarding this quickly" is a
+   bounded read-only second opinion on a diagnosis - the orchestrator keeps
+   ownership and Fable never implements. Tier by task difficulty inside a
+   session too ("use opus for animations if needed", "opus 5.5 for hero
+   changes"). Never spawn top-tier agents for grunt work. Sequential agents by
    default; parallel only when tasks are provably independent. One writer per
    repo at a time; read-only reviewers may overlap. Review effort scales with
    risk: concurrency/destructive/security diffs get top-model review,
    mechanical diffs don't. Dispatches name the specific risks and require
-   trace-before-patch. His main parallelism is sessions, not subagents: he
-   runs 10-25 worktrees a day, so every session must assume main is moving
-   under it. Usage limits are real: when a run hits the limit, say so and
-   stop; never degrade silently to a cheaper path he didn't pick.
+   trace-before-patch. Verification is batched per wave: the box is the
+   bottleneck, so a multi-task wave gets ONE suite run on the box and ONE
+   review by a non-implementing model after every task has landed ("no
+   per-task test runs or reviews, review and test run after implementation
+   finishes, then fix until green"); per-task runs only when he asks or the
+   task is destructive/concurrent. His main parallelism is sessions, not
+   subagents: he runs 10-25 worktrees a day, so every session must assume
+   main is moving under it. Usage limits are real: when a run hits the limit,
+   say so and stop; never degrade silently to a cheaper path he didn't pick.
    Agent mechanics that held across seven projects:
+   - Plans are handoff artifacts. He gives them to another session or to
+     Codex ("create an implementation plan, so i could give it to codex"), so
+     a plan carries everything an outsider needs: runner recipe, queue
+     wrapper, paths, commit rules, the comparator. After the work, update the
+     plan doc with findings ("merge all to main and update plan from above
+     with findings"). A wave ends with a handoff line: branch or local-main
+     state, plan path, next item, state flags.
    - One implementer per task from a brief file that carries the plan's
      global constraints (runner recipe, queue wrapper, commit rules); the
      brief extractor drops them unless you hand them over. Implementers
@@ -135,9 +164,22 @@ Lithuanian depending on the project.
 - Dispatch formula tokens at the end of a message are instructions, not
   notes: `tdd` (failing tests first), `e2e`, `unit tests` (both suites),
   `opus agent` / `sonnet agent` (implement on that model), `fable verify` /
-  `opus verify` (separate verification pass by that model), `subagent-driven`
-  (execute the plan through subagents), `caveman ultra`, `ponytail`, `go`.
-  Parse them literally; never ask what they mean.
+  `opus verify` / `then verify` (separate verification pass by that model),
+  `consult <model>` (bounded read-only second opinion, you keep ownership),
+  `subagent-driven` (execute the plan through subagents), `no per-task test
+  runs or reviews` (one suite run + one review after the wave), `caveman
+  ultra`, `ponytail`, `go`. Parse them literally; never ask what they mean.
+- Sequencing words: "carry on after successful finish" = once the run is
+  green, continue with the next queued step, no check-in. "merge, go phase
+  N" = merge this, start the next phase. "wait for B to merge and finish D"
+  = ordering across sessions; respect it. "compact, merge to main, and carry
+  on" = all three, in order.
+- Approvals arrive as a restated plan: "Yes: make the picked folder the
+  library itself, catalog outside it. Opus agent, then verify." / "Taip:
+  commit, merge to main (ff), push, ir pažiūrėk CI." The restatement IS the
+  spec and the tokens still apply. Keyed replies answer questions inline
+  ("1. fork blitz 2. reimplement 3. why is it legacy? 4. yes"): answer the
+  question items, execute the rest.
 - A path to a plan or spec in the message is the instruction to execute it.
 - The latest directive supersedes without ceremony. He reverses his own
   earlier decisions freely - execute the reversal, remove the old logic,
@@ -200,8 +242,20 @@ Lithuanian depending on the project.
   push, let CI build. "If I ask to release something I want things pushed;
   no need to release stale things. We create a bunch of fixes, then test
   after deploy." Never leave a release local.
-- "merge to main" means rebase onto main, fast-forward merge, push. That is
-  the push prompt; don't ask again.
+- "merge to main" means fetch, rebase, fast-forward into LOCAL main, stop.
+  It is NOT a push. "We merge locally and I will push later once more work
+  lands on local main. merge push - merge to main and push." (2026-10-25).
+  Push words: "push", "push to main", "merge push", "merge to main and
+  push", "push it", "push all", "release", "deploy". Report "merged to local
+  main, NOT pushed, N ahead of origin" (`git rev-list --left-right --count
+  origin/main...main`). Never ask "should I push?" on a bare merge.
+- CI minutes are a budget: every push runs CI and, for website paths, the
+  deploy. The day's merges land on local main; he pushes once in the evening
+  ("work whole day, merge to local main - push once in the evening"). When
+  the quota is out he names the local path in that message: "push and deploy
+  from this mac, we have no gh minutes left", "you can notarize as well from
+  this mac", "manual push to sandbox", "deploy by hand" - run the repo's own
+  deploy/notarize script locally, only then, never as a default.
 - "Do everything that doesn't need me first": when a plan mixes agent-side
   and his-side steps (secrets, consoles, device tests, purchases), do all the
   agent-side work to completion, then hand him the exact list of his-side
@@ -209,7 +263,8 @@ Lithuanian depending on the project.
 - He delegates judgment calls when the agent has more context - make the
   reasoned pick, don't bounce the decision back.
 - Hard edges regardless of momentum: never push, publish, or expose identity
-  unprompted (the prompts are: push, merge to main, release, deploy, publish).
+  unprompted (the prompts are: push, merge push, release, deploy, publish;
+  "merge to main" alone is not one).
   Destructive or system-changing steps (deletions, upgrades, history
   rewrites) wait for explicit per-action OK. Prepare everything; he pulls the
   trigger.
@@ -232,9 +287,13 @@ Lithuanian depending on the project.
   deploy key that is already root to the box makes "keep secrets off GitHub"
   moot; his reasoning won). Permission breadth: wide for tools people use to
   do their job, narrow for acts done in the company's name.
-- Client platforms: "commit and deploy" = push main, CI, sandbox. The
-  production button is his; the agent never presses it and never runs the
-  box deploy script unasked.
+- Client platforms: "commit and deploy" = push main, CI, sandbox. "manual
+  push to sandbox" / "deploy by hand" / "rankinė sandbox laida" = run the
+  box's release script for sandbox yourself, this once. The production
+  button is his; the agent never presses it and never runs the box deploy
+  script unasked. Prod data repair only on an explicit grant ("run the
+  backfill script on prod yourself", "Backup DB first"); "Nieko nerašyk
+  prod" / "No prod data repair yet" is read-only.
 
 ## Worktrees and parallel sessions
 
@@ -245,9 +304,25 @@ Lithuanian depending on the project.
 - One topic, one worktree, one writer. Dependencies land in the worktree's
   own lockfile (install from the worktree cwd, locked version, `--no-save`
   when the dep already exists on main), never dirtying main from a worktree.
-- Main moves under every session. Merge = fetch, rebase onto origin/main,
-  fast-forward, push. Rebase conflict -> stop and report; never `--force`,
-  `rebase --skip`, or `--strategy=ours` to make it go away.
+- Main moves under every session. Merge = fetch, rebase, fast-forward into
+  local main; push only on a push word. Local main is usually AHEAD of
+  origin (the day's batch), so rebase onto local main (`--onto main
+  <old-base>`), not origin/main, or you duplicate commits. Rebase conflict ->
+  stop and report; never `--force`, `rebase --skip`, or `--strategy=ours` to
+  make it go away.
+- The evening push is one batch: before it, local main is clean, rebased on
+  origin/main, the ahead count is what he expects, and `git diff
+  --name-only origin/main..main` holds no neighbour's surprise. A merge
+  commit from origin into local main is fine when he says so ("no rewriting
+  of the 4 unpushed commits").
+- Sessions hand off to sessions. "how to carry on in new session", "tell me
+  how another session can pick this up", "Propose C as its own session" are
+  routine: end a wave with the handoff line (branch or local-main sha, plan
+  path, next item, state flags) and split independent streams into their own
+  sessions. Before "done" on a surface, check sibling branches and sessions
+  for work on the same surface - a feature built in one session vanished in
+  another's merge ("where is the animation???? we had an animation from
+  another session?").
 - Abandoned branches become `archive/<name>` tags, pushed, not deleted.
 - Dead-end attempts revert to last committed and redo properly - never patch
   forward on a mess.
@@ -281,7 +356,41 @@ Lithuanian depending on the project.
   (Mac mini for Xcode, Sparkle and mac e2e; Windows runner for Windows;
   either for cargo/npm) through the job queue, from the worktree. "Never
   ever run tests on this machine." The queue exists so parallel worktrees
-  don't fight over ports, DBs and CPU.
+  don't fight over ports, DBs and CPU. Building the app locally so he can
+  try it is allowed ("before tests, build me app locally"); suites are not.
+- A queued box job bundles the worktree when it STARTS, not when queued. A
+  TDD red queued behind a busy box must not see the implementation yet: keep
+  it in the scratchpad until the job log shows the runner started, then move
+  it in. Pipelines with quotes go to the box as an untracked script file,
+  not `bash -c '...'`.
+- An empty filtered run is not a pass. A grep filter that eats the `test
+  result:` summary makes a green run, a compile error and a job that never
+  ran look identical (two misreads in one session). Keep the pass counts
+  visible ("N passed", errors, panics) and confirm new tests were in the run
+  (count moved, or run by name) before calling it green.
+- Mobile verification is the device loop. Build to his iPhone (device hub,
+  "iphone is never locked, it is always on"), he performs the gesture, you
+  read the log. Auto-tap when the harness can ("i cant be bothered to tap
+  buttons. you can auto tap them"). A visual glitch gets ONE analysis pass;
+  if that doesn't settle it, ship a colour-coded debug build (suspect
+  surfaces in loud colours, overlays hidden) and let him pinch once. One
+  "gone" report is provisional ("the gray blink is gone" was followed by
+  "still there" four minutes later): a visual fix is done after the second
+  confirmation.
+- Preview gate for anything visual: a standalone preview in Safari, one item
+  per approval, "dont start second one without approval". Start pixel art at
+  the finest density and let him ask for chunkier. New content is produced in
+  English first and approved, then localized ("i will approve english and we
+  can localize them") - never the nine-locale fan-out in the same pass.
+- Media is verified like code: after every ffmpeg build, `ffprobe` the
+  stream list (count, durations, default flags) before trusting any claim;
+  brace every shell variable inside filter strings. A render that looks
+  fine shipped once with the voiceover on the wrong track.
+- Session temp storage is volatile: a restart wipes the scratchpad (ten
+  hours of clip recordings vanished). Multi-hour jobs write to a persistent
+  folder and publish each unit as it finishes, in the same script; review
+  happens on the published copy. "don't mind if jobs cross midnight, just
+  finish them."
 - Default coverage for a behavior change: unit tests + e2e, and multi-account
   e2e when the feature is UI-facing. "Everything must be covered by unit
   tests and e2e tests."
@@ -360,7 +469,10 @@ implementation's pattern.
    attempt. For a regression with a known-good past: bisect.
 3. Then: written plan + clarifying questions + independent validation by a
    second agent. Architectural rewrites are acceptable at this stage - he
-   initiates them.
+   initiates them. A bug that survives several sessions gets a
+   consolidation refactor, not another patch ("same error we have been
+   trying to solve for couple weeks" -> "create a plan for refactoring" ->
+   move retry, journal and undo into the daemon).
 
 - Cheap previews before real code: ASCII mockup or static preview from real
   data for ambiguous UI; he signs off with a one-liner.
@@ -407,9 +519,9 @@ into the chain.)
 
 ## Git discipline (hard rules)
 
-- A worktree per topic, commit often. Merge to main when he says so.
-  **Never push unprompted**; "push", "merge to main", "release", "deploy",
-  "publish" are the prompts.
+- A worktree per topic, commit often. Merge to LOCAL main when he says so.
+  **Never push unprompted**; "push", "merge push", "release", "deploy",
+  "publish" are the prompts. "merge to main" alone stops at local main.
 - **No Co-Authored-By lines.** Conventional commits: `feat(scope):`,
   `fix(kit):`, `docs:`, `chore:`. Subject <=50 chars, body only when the why
   isn't obvious. With no trailer, the subject line is the only attribution
@@ -426,22 +538,26 @@ into the chain.)
 - Branch names like `feature/ios-ui-screen-fit`; abandoned work archived as
   tags.
 - **Wrap-up rule:** when work is verified and the tree is dirty, ask:
-  commit / commit+merge to main / commit+merge+deploy / nothing - then do
-  it. Merge ALWAYS rebases first and includes the push. Before offering the
-  menu: grep the workflows' `on:` triggers and say "merging here also
-  deploys" inside the question when it does; run
-  `git diff --name-only origin/main..main` so the push doesn't carry a
-  neighbour's 103 website files unannounced.
+  commit / commit+merge to local main / commit+merge+push /
+  commit+merge+push+deploy / nothing - then do it. Merge ALWAYS rebases
+  first; the push is its own option. Before offering the menu: grep the
+  workflows' `on:` triggers and say "pushing here also deploys" inside the
+  question when it does; run `git diff --name-only origin/main..main` so a
+  push doesn't carry a neighbour's 103 website files unannounced.
 - Release hygiene: never cut while work in progress is unmerged; before a
   recut, diff every commit since the release commit against CHANGELOG.md;
   announcements key off "release: published", not the release commit; a
-  defect born inside an unpublished version gets no "Fixed" entry.
+  defect born inside an unpublished version gets no "Fixed" entry. After any
+  rebase over a `release:` commit, read the top of CHANGELOG.md: git anchors
+  your `[Unreleased]` lines to the surrounding text and files them under the
+  version that just shipped.
 
 ## Honesty & verification (hard rules)
 
-- Track state with exact flags: "SHIPPED local main <sha>, NOT pushed, NOT
-  live-smoke-tested", "builds green, awaiting device retest", "suite queued
-  on the mini, not run". Never round up. "is it done?" gets exactly this.
+- Track state with exact flags: "SHIPPED local main <sha>, NOT pushed (3
+  ahead of origin), NOT live-smoke-tested", "builds green, awaiting device
+  retest", "suite queued on the mini, not run". Never round up. "is it
+  done?" / "is this merged?" gets exactly this.
 - Tests green + build green != done. Done = live smoke test: play-verified on
   simulator/device, driven in the real app, curl'd on the real server.
   Computer-use/screenshots to verify UI when possible; note when a step
@@ -468,10 +584,58 @@ into the chain.)
   possible. The displayed price and currency come from the same signal that
   charges. Filters are instant; the search button is hidden with scripting
   enabled, not deleted, so no-JS keeps it.
-- **Resilient over noisy.** Retry transient network/credential failures
-  before surfacing errors. Never overwrite richer local state with partial
-  state. Degrade gracefully when config is missing (report "not configured",
-  don't crash). A 200 that means "found nothing" needs its own UI branch.
+- **Resilient over noisy.** Self-recovery is the first design, not the
+  error copy: reconnect with backoff, re-discover the peer, version-handshake
+  the daemon after a rebuild, recreate a missing folder ("I deleted the
+  folder. This case should be covered by auto recovery" -> "just recreate
+  the missing folder"). "It can never fail while pairing or when
+  reconnecting." What still surfaces is human: what happened and what to do
+  next, never a raw code ("too vague. no vague errors without suggestion
+  what to do next"), on ONE consolidated issue surface that updates in place
+  ("don't spam same error with alerts. create a sheet or view with ongoing
+  issue"). Failed server actions go to a persisted queue with the local
+  effect applied instantly and one daily reminder. Retry transient
+  network/credential failures before surfacing errors. Never overwrite richer
+  local state with partial state. Degrade gracefully when config is missing
+  (report "not configured", don't crash). A 200 that means "found nothing"
+  needs its own UI branch.
+- **Performance is a feature.** "The UI should not lag ever." Large lists
+  never load on the main thread; virtualize and render what is visible;
+  preload neighbours so the next photo is instant after a swipe; batch async
+  loads; parallel transfer lanes that auto-scale on measured throughput ("up
+  to 10, automatic increase if speed does not drop"); measure RAM and ask
+  what a dir listing costs. Keep a risky engine (a new renderer) opt-in
+  behind a toggle in its own module so removing it is trivial.
+- **Apple's own app is the comparator.** On Apple platforms the system app
+  (Photos, Notes) defines the behaviour ("same as apple photos") and the
+  Human Interface Guidelines define the controls: icons with text in
+  headers, native dark colours, no gray placeholders (empty tiles black like
+  the grid), liquid glass where the OS offers it, atomic-design components.
+  "Check if any other app view matches the ui/ux guidelines from apple. If
+  not update them" is a standing instruction.
+- **Monetisation rules.** A subscription app gates on the paywall ("app
+  does not work without subscription"): no "subscribe or trial" split,
+  "subscribe" only when expired, restore/manage under Settings. Web checkout
+  first, then download; a returning buyer is charged at checkout, trial
+  skipped. Early access is open-ended with elevated prices displayed. A
+  free product uses in-app lifecycle messages, not email. Free exports may
+  carry sponsor pages that one donation removes. Server-side entitlement
+  sync is deferred until the next platform needs it. Claims stay inside the
+  licence truth: with no LICENSE file say "the source is live on GitHub",
+  not "open source".
+- **Marketing production is build-box work.** Demo videos recorded on the
+  mini at 4K plus a 9:16 portrait cut, talking-head edits with subtitles,
+  music from real instruments only, click overlays on UI clips, localized
+  light/dark clips published per locale, App Store custom product pages and
+  PPO variants, Duo/iPad screenshots. Reusable capture and upload scripts
+  live in one central repo. Social copy is personal and cheeky (builder,
+  14+ years, systematic), ends with a hook question, hides his email and
+  name from screenshots; subreddit rules are read before posting. Public
+  replies to users are fast, warm and factual ("all your email is safe").
+- **Self-improving skills.** A skill that misreads an input records the
+  lesson into itself (self-check before acting, versioned gate, report tool),
+  not into a memory: "if it does not read properly - read and always update
+  the skill. Make this automatic improving skill."
 - **Operate, don't hope.** Production services get a health monitor with
   automatic recovery; a service found dead after a promote is a process bug.
   Post-mortem format: what happened, why, why no monitor caught it. Backups

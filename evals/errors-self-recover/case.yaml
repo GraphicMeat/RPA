@@ -1,0 +1,39 @@
+schema_version: "1.1"
+name: errors-self-recover
+description: Connection and service failures in a shipped app are designed to self-recover first (retry, reconnect, version handshake, recreate what is missing); what still surfaces is one human message naming what happened and what to do next, on one consolidated issue surface, never repeated alerts.
+tags: [product, resilience, tdd]
+runs: 2
+expected_outcome: Design puts automatic recovery first (reconnect loop with backoff, daemon version handshake after rebuild, recreate a missing folder), then a single issue sheet/view with human copy (what happened + what to do), no alert spam; failing tests listed first for each path.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    iphone-to-mac photo app. pairing sometimes fails with "cannot reach mac".
+    after i rebuild the mac app it says "background service not available" and
+    reconnect does nothing. when i deleted the download folder it showed
+    "connection_lost" alerts over and over. fix. tdd.
+    This session has no shell: write the design and the list of failing tests
+    you will write first.
+graders:
+  - name: recovery-first-then-human
+    type: llm
+    weight: 3
+    criteria: |
+      PASS if ALL hold: (1) each failure gets automatic recovery before any UI:
+      pairing/connection retried with backoff or re-discovery, the app detects a
+      daemon version mismatch after a rebuild and restarts/relaunches the
+      service (or equivalent handshake), a missing download folder is recreated
+      or re-picked automatically; (2) what still surfaces is human copy that
+      names what happened AND the next step, not a raw code like
+      "connection_lost"; (3) repeated alerts are replaced by ONE consolidated
+      ongoing-issue surface (sheet, banner, view) that updates in place.
+      FAIL if: the fix is only better wording on the alerts, errors still
+      surface before a recovery attempt, alerts can repeat, or any surfaced
+      error lacks a next step.
+  - name: tests-first
+    type: llm
+    weight: 1
+    criteria: |
+      PASS if the response lists failing tests to write first, one per recovery
+      path (pairing retry, version mismatch, missing folder, no repeated alert).
+      FAIL if tests are absent or planned only after implementation.

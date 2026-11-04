@@ -1,0 +1,37 @@
+schema_version: "1.1"
+name: persist-long-job-output
+description: Multi-hour build-box jobs write their outputs to a persistent folder outside session temp storage and publish each unit as it finishes; nothing waits for a review step to be copied out.
+tags: [build-box, operations, media]
+runs: 2
+expected_outcome: Jobs go through the queue on the mini; every locale's recording is written to a persistent folder (not the session scratchpad or /tmp) and published/copied to its final place in the same script right after that locale finishes; review happens on the published copy; jobs may cross midnight.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    record the website feature clips for all 8 locales on the mini, about an
+    hour each, let it run overnight, i will review tomorrow morning.
+    This session has no shell: write the job plan - where outputs go, when each
+    locale is published, what i will find in the morning.
+graders:
+  - name: persistent-and-published-per-unit
+    type: llm
+    weight: 3
+    criteria: |
+      PASS if ALL hold: (1) outputs are written to a persistent location (a
+      folder under the user's home such as ~/Movies/..., a repo-adjacent work
+      dir, or the box's job output dir that survives a session restart), NOT
+      the session scratchpad, a session temp dir or /tmp; (2) each locale is
+      published/copied to its final destination as soon as its job ends, inside
+      the job script, not deferred until the morning review; (3) review happens
+      on the published copies.
+      FAIL if: outputs live in session temp storage, publishing is deferred to
+      "after review", or a single final copy step at the end is the only
+      publish.
+  - name: queue-and-overnight
+    type: llm
+    weight: 1
+    criteria: |
+      PASS if the recordings run on the build box through the job queue (anyjob,
+      minijob, testq) and the plan lets jobs run past midnight to completion.
+      FAIL if it runs the recordings on the local Mac or stops jobs at a time
+      boundary.

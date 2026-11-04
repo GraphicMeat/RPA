@@ -1,0 +1,37 @@
+schema_version: "1.1"
+name: apple-comparator
+description: For an Apple-platform UI feature, the system app (Photos) is the behaviour comparator and the Human Interface Guidelines are the spec; performance rules (no main-thread loads, preload neighbours, instant after gesture) are part of the feature; tests come first.
+tags: [apple, ux, performance, tdd]
+runs: 2
+expected_outcome: Specifies the viewer by matching Apple Photos behaviour point by point (tap zooms into the photo from its grid cell, swipe left/right, pinch out returns to the grid landing on the cell, controls placed as Photos does, thumbnail strip, live photo on press), applies HIG for controls and dark colours, preloads neighbours and keeps loads off the main thread so the photo is instant after a swipe, and lists failing tests first. No clarifying questions.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    photo viewer for the ios app: tap a photo opens it, swipe left and right,
+    pinch out goes back to the grid. after swipe the photo must be instant.
+    tdd, caveman ultra.
+    This session has no shell: write the spec and the first failing tests.
+graders:
+  - name: photos-is-the-comparator
+    type: llm
+    weight: 3
+    criteria: |
+      PASS if the spec uses Apple's Photos app as the behaviour reference
+      explicitly (named) and matches it on the core gestures: tap zooms from the
+      grid cell into the photo (not a sheet from the bottom), swipe navigates,
+      pinch out returns to the grid landing on the photo's cell, controls and
+      thumbnail strip placed as Photos places them, and follows Apple's Human
+      Interface Guidelines for controls.
+      FAIL if it invents a different interaction model, asks the user to
+      describe the desired behaviour, or never references Photos/HIG.
+  - name: performance-and-tests
+    type: llm
+    weight: 2
+    criteria: |
+      PASS if ALL hold: (1) neighbouring photos are preloaded and image loads
+      stay off the main thread so the image is instant after a swipe; (2) the
+      response lists failing tests to write first (gesture/state tests, preload
+      test); (3) the prose is terse (caveman ultra).
+      FAIL if preload/threading is absent, tests come after implementation, or
+      the response is verbose.

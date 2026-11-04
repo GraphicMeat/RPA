@@ -1,0 +1,31 @@
+schema_version: "1.1"
+name: english-first-then-localize
+description: New website content is produced in English first and shown for approval; the locale fan-out happens after approval, never in the same pass. SEO rules apply to the page and the merge stays on local main.
+tags: [website, localisation, process]
+runs: 2
+expected_outcome: Builds the English page first with the SEO essentials (one h1, title/meta/canonical, JSON-LD, sitemap entry, static HTML content), previews it for approval, and defers the nine-locale fan-out and localized screenshots until he approves the English version. Commits and merges to local main without pushing.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    new /compare page vs the main competitor, all 9 locales, light and dark
+    screenshots. commit, merge to main.
+    This session has no shell: write the plan and the order of steps.
+graders:
+  - name: english-gate
+    type: llm
+    weight: 3
+    criteria: |
+      PASS if the plan produces and shows the English page for approval BEFORE
+      generating the other eight locales and their screenshots, and says the
+      localisation follows approval.
+      FAIL if all nine locales are generated in one pass before any approval,
+      or the plan never mentions an approval gate on the English version.
+  - name: seo-and-local-merge
+    type: llm
+    weight: 2
+    criteria: |
+      PASS if ALL hold: (1) the page is real static HTML content with exactly
+      one h1, title/meta/canonical, JSON-LD and a sitemap update; (2) the merge
+      is to local main (rebase + ff) with NO push and no question about pushing.
+      FAIL if SEO essentials are missing or the plan pushes.

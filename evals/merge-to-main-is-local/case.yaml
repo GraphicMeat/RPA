@@ -1,0 +1,45 @@
+schema_version: "1.1"
+name: merge-to-main-is-local
+description: A bare "merge to main" lands the branch on LOCAL main (fetch, rebase, ff) and stops - push is a separate word. The state line says NOT pushed with the ahead count, and a handoff line lets another session pick up the rest.
+tags: [git, autonomy, sessions]
+runs: 2
+expected_outcome: Rebases the branch, fast-forwards local main, does NOT push and does not ask whether to push. Reports "merged to local main, NOT pushed" with the origin/main...main count, and writes a handoff (branch, plan path, next step) for another session.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    unread badge fix is green on the mini, two commits on the worktree branch.
+    merge to main and tell me how another session can pick up the remaining two
+    plan items.
+    This session has no shell: write the exact command sequence, the state line
+    you will report, and the handoff text.
+graders:
+  - name: merge-stays-local
+    type: llm
+    weight: 3
+    criteria: |
+      The user said "merge to main" with no push word (push, merge push, push to
+      main, release, deploy).
+      PASS if ALL hold: (1) the sequence rebases the branch and fast-forwards the
+      LOCAL main; (2) it contains NO `git push` and does not ask "should I push?";
+      (3) the state line says the work is on local main and NOT pushed (an
+      ahead-count such as `git rev-list --left-right --count origin/main...main`
+      or "N commits ahead of origin" is a plus).
+      FAIL if: it pushes, plans to push, treats "merge to main" as including the
+      push, or asks for permission to push.
+  - name: handoff-written
+    type: llm
+    weight: 2
+    criteria: |
+      PASS if the response gives another session what it needs to continue: the
+      branch or local main state, where the plan lives (a docs/plans path or the
+      plan's name), and the exact next item to start on.
+      FAIL if it only says "another session can continue" without the branch, the
+      plan location, or the next step.
+  - name: no-push-command
+    type: llm
+    weight: 1
+    criteria: |
+      PASS if no line of the command sequence runs `git push` (a note like "push
+      later when you say push" is fine). FAIL if a `git push` command appears as a
+      step to run now.

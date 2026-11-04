@@ -2,7 +2,7 @@
 
 A [Claude Code plugin](https://docs.claude.com/en/docs/claude-code/plugins) that makes Claude act and take decisions like GraphicMeat.
 
-Distilled from real development history across MailVault, MeatPad, PhotoBooks, MailMule, a logistics platform, a construction-estimating platform, WW2, Shopify, graphicmeat.com, meatlytics, and mini-server: orchestrate-don't-grind, interview before big builds, one decisive recommendation, root cause not symptom, honest state tracking ("local, NOT pushed, NOT smoke-tested"), never push unprompted (but "release" and "merge to main" end pushed), one worktree per topic, suites on the build box never the laptop, verifier is never the implementer, mechanism over memory, no planning docs in git, privacy-first self-hosted products, SEO as a hard requirement.
+Distilled from real development history across MailVault, MeatPad, PhotoBooks, ColdRoll, RareTake, MailMule, a logistics platform, a construction-estimating platform, WW2, Shopify, graphicmeat.com, meatlytics, and mini-server: orchestrate-don't-grind, interview before big builds, one decisive recommendation, root cause not symptom, honest state tracking ("local, NOT pushed, NOT smoke-tested"), never push unprompted ("release" ends pushed, "merge to main" stops at local main, push is its own word), one worktree per topic, suites on the build box never the laptop, verifier is never the implementer, mechanism over memory, no planning docs in git, privacy-first self-hosted products, SEO as a hard requirement.
 
 ## Structure
 

@@ -1,0 +1,37 @@
+schema_version: "1.1"
+name: wave-end-verification
+description: With a multi-task wave the suite runs ONCE on the build box after the whole wave and the review happens once at the end, by a model that did not implement - never a suite run or review per task unless asked.
+tags: [orchestration, testing, cost]
+runs: 2
+expected_outcome: Dispatches the six tasks to Sonnet implementers (failing tests written first, not run per task), schedules ONE suite run on the build box through the queue after all tasks land, then ONE review by a non-implementing model, then fix-until-green. No per-task suite runs, no per-task reviews.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    plan at docs/plans/2026-11-04-delete-consolidation.md has 6 tasks. execute
+    all, subagent-driven, sonnet agents, tdd. no per-task test runs or reviews,
+    review and test run after implementation finishes, then fix until green.
+    caveman ultra.
+    This session has no shell: write the execution plan - who implements on
+    which model, when suites run and where, when the review happens and by whom.
+graders:
+  - name: one-run-one-review
+    type: llm
+    weight: 3
+    criteria: |
+      PASS if ALL hold: (1) implementation is delegated to Sonnet-model agents,
+      one per task or sequential, not done inline; (2) the test suite runs ONCE
+      after all six tasks are implemented, on the build box via the job queue
+      (anyjob/minijob/testq or "build box"/"mac mini"), not per task and not on
+      the local machine; (3) the review happens once at the end, by a model that
+      is not the implementer; (4) tests are still written first (failing tests
+      per task, trust-the-red is fine).
+      FAIL if: it runs the suite after each task, reviews after each task, runs
+      tests on the dev machine, has the implementer review its own work, or
+      drops TDD.
+  - name: terse
+    type: llm
+    weight: 1
+    criteria: |
+      The user said "caveman ultra". PASS if the response is terse (fragments,
+      no pleasantries, no option essays). FAIL if it is long-winded or hedges.
