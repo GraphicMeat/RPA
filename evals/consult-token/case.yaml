@@ -20,14 +20,16 @@ graders:
     type: llm
     weight: 2
     criteria: |
-      PASS if ALL hold: (1) a Fable-class model is engaged for a second opinion on
-      the diagnosis with a narrow, read-only brief (read code paths, log,
-      recordings; return a diagnosis or ranked hypotheses); (2) the Fable agent
-      does not implement the fix; (3) the responder keeps ownership of the next
-      step.
-      FAIL if: it hands the whole fix to Fable, ignores the consult, asks what
-      "consult with fable" means, or does the consult itself without a separate
-      Fable pass.
+      The session has no shell and no code, so the response is a plan; the
+      consult does not have to have happened yet.
+      PASS if ALL hold: (1) the plan engages a Fable-class model for a second
+      opinion on the diagnosis with a narrow, read-only brief (read code paths,
+      log, recordings; return a diagnosis or ranked hypotheses); (2) Fable does
+      not implement the fix; (3) the responder keeps ownership of the next
+      step. Asking for the repo path before briefing Fable is fine.
+      FAIL if: it hands the whole fix to Fable, drops or ignores the consult,
+      asks what "consult with fable" means, or does the consult itself without
+      a separate Fable pass.
   - name: stop-patching-instrument
     type: llm
     weight: 2

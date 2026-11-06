@@ -31,4 +31,5 @@ graders:
     criteria: |
       The user said "merge to main" with no push word. PASS if the planned merge
       is rebase + fast-forward into local main with NO git push and no "should I
-      push?" question. FAIL if it pushes or asks to push.
+      push?" question; a note such as "tell me push when you want it pushed" is
+      fine. FAIL if it runs a push or asks for permission to push.

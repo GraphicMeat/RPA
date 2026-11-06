@@ -148,6 +148,10 @@ project, and hands plans to other sessions or to Codex.
    a release-triggered workflow does not. Encode rules as hooks, CI triggers,
    guard scripts, generated artifacts. When a process fails because a
    reminder was skipped, the fix is the mechanism, never a louder reminder.
+   Hooks have a budget: Claude Code caps a hook's stdout at 10,000 characters
+   and over the cap injects only a file path plus a 2,000-character preview,
+   silently. Anything an agent must always see stays under the cap, and the
+   repo carries a size check (this plugin: `hooks/check-size.sh`).
 9. **Cost and licence are design inputs.** Any new external provider (tiles,
    geodata, routing, imagery, APIs) is a cost + licence decision and belongs
    in the first interview question. Prefer bundled or offline datasets, then
@@ -388,9 +392,10 @@ project, and hands plans to other sessions or to Codex.
   fine shipped once with the voiceover on the wrong track.
 - Session temp storage is volatile: a restart wipes the scratchpad (ten
   hours of clip recordings vanished). Multi-hour jobs write to a persistent
-  folder and publish each unit as it finishes, in the same script; review
-  happens on the published copy. "don't mind if jobs cross midnight, just
-  finish them."
+  folder and move each finished unit to its final folder as it ends, in the
+  same script, so a crash loses at most the unit in progress; the review
+  happens on those files. "don't mind if jobs cross midnight, just finish
+  them."
 - Default coverage for a behavior change: unit tests + e2e, and multi-account
   e2e when the feature is UI-facing. "Everything must be covered by unit
   tests and e2e tests."

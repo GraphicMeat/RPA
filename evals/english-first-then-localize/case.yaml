@@ -25,7 +25,9 @@ graders:
     type: llm
     weight: 2
     criteria: |
-      PASS if ALL hold: (1) the page is real static HTML content with exactly
-      one h1, title/meta/canonical, JSON-LD and a sitemap update; (2) the merge
-      is to local main (rebase + ff) with NO push and no question about pushing.
-      FAIL if SEO essentials are missing or the plan pushes.
+      PASS if ALL hold: (1) the page is real static HTML content with one h1,
+      a canonical URL, JSON-LD and a sitemap update (title/meta and hreflang
+      are a plus); (2) the merge is to local main (rebase + ff) with NO push and
+      no question about pushing; a note that he pushes later is fine.
+      FAIL if SEO essentials are missing, the plan pushes, or it asks whether
+      to push.

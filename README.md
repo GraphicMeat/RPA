@@ -26,11 +26,24 @@ Each rule that changed real outcomes has an eval case under `evals/`. Run them
 against this checkout:
 
 ```bash
-claude plugin eval . --ablation none -j 4
+claude plugin eval . --ablation none -j 4 --judge-model sonnet
 ```
+
+The default judge (haiku) misreads long technical answers: on the 2026-11-06
+runs it failed a merge sequence that contained no `git push` and a plan that
+had every SEO item it asked for. Sonnet as judge costs cents more per run.
 
 Doctrine changes follow TDD: add the failing case first, then change SKILL.md
 and the session hook until it passes, then rerun the whole suite.
+
+The session hook has a hard budget. Claude Code caps hook stdout at 10,000
+characters; over the cap it injects only a file path and a 2,000-character
+preview, and the persona silently disappears (1.3.0 shipped at 10,642 chars and
+scored 9/23 until trimmed). Before committing a hook change:
+
+```bash
+hooks/check-size.sh
+```
 
 ## Install
 

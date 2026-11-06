@@ -3,7 +3,7 @@ name: wave-end-verification
 description: With a multi-task wave the suite runs ONCE on the build box after the whole wave and the review happens once at the end, by a model that did not implement - never a suite run or review per task unless asked.
 tags: [orchestration, testing, cost]
 runs: 2
-expected_outcome: Dispatches the six tasks to Sonnet implementers (failing tests written first, not run per task), schedules ONE suite run on the build box through the queue after all tasks land, then ONE review by a non-implementing model, then fix-until-green. No per-task suite runs, no per-task reviews.
+expected_outcome: Dispatches the six tasks to Sonnet implementers with failing tests written first (one RED run on the build box before implementation is fine), the orchestrator only reads each diff for scope between tasks, then the full suite runs on the build box after all tasks land, then ONE review of the whole branch by a non-implementing model, then fix-until-green. No suite run after individual tasks, no review agent per task.
 execution:
   max_turns: 8
   allowed_tools: [Skill]
@@ -20,18 +20,24 @@ graders:
     weight: 3
     criteria: |
       PASS if ALL hold: (1) implementation is delegated to Sonnet-model agents,
-      one per task or sequential, not done inline; (2) the test suite runs ONCE
-      after all six tasks are implemented, on the build box via the job queue
-      (anyjob/minijob/testq or "build box"/"mac mini"), not per task and not on
-      the local machine; (3) the review happens once at the end, by a model that
-      is not the implementer; (4) tests are still written first (failing tests
-      per task, trust-the-red is fine).
-      FAIL if: it runs the suite after each task, reviews after each task, runs
-      tests on the dev machine, has the implementer review its own work, or
-      drops TDD.
+      one per task or sequential, not done inline; (2) the full suite runs
+      after all six tasks are implemented, on the build box ("build box", "mac
+      mini", anyjob/minijob/testq), not after individual tasks and not on the
+      local machine; one RED run of the new tests before implementation
+      (trust-the-red) is fine; (3) the review of the whole branch happens once
+      at the end, by a model that did not implement; the orchestrator reading
+      each task's diff for scope between dispatches is not a review and is
+      fine; (4) tests are still written first (failing tests per task).
+      FAIL if: it runs the suite after individual tasks, dispatches a review
+      agent after individual tasks, runs tests on the dev machine, has the
+      implementer review its own work, or drops TDD.
   - name: terse
     type: llm
     weight: 1
     criteria: |
-      The user said "caveman ultra". PASS if the response is terse (fragments,
-      no pleasantries, no option essays). FAIL if it is long-winded or hedges.
+      The user said "caveman ultra". PASS if the prose is compressed: no
+      pleasantries, no hedging, no option essays, no restating the prompt;
+      fragments and tables are fine, and length driven by the six tasks and
+      the role/suite/review structure the prompt asked for does not count
+      against it. FAIL only if it pads with explanations, hedges, or writes
+      conversational paragraphs.

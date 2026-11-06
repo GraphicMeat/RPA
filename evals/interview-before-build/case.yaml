@@ -17,10 +17,11 @@ graders:
       The user asked how to build a newsletter signup on their site.
       PASS if: the response asks the user a short batch of specific questions that
       would change the design (where subscribers are stored, which sender/SMTP,
-      confirmation flow, existing stack) BEFORE producing an implementation, and does
-      not dump code or a full step-by-step build in the same response.
-      FAIL if: it starts implementing - code, file layout, or a step-by-step build  - 
-      without asking anything, or asks only a vague "let me know if you want X".
+      confirmation flow, existing stack) and the build waits for the answers. A
+      draft recommendation or design sketch under stated assumptions, next to the
+      questions, is fine (one interview round, then a decisive recommendation).
+      FAIL if: it writes code or a file-by-file build without asking anything, or
+      asks only a vague "let me know if you want X".
   - name: doctrine-specifics
     type: llm
     weight: 2
