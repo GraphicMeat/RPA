@@ -1,0 +1,51 @@
+schema_version: "1.1"
+name: ci-minutes-mechanism
+description: >-
+  An exhausted hosted-CI quota is measured per repo before anything changes,
+  then fixed with a mechanism that removes the hosted minutes (self-hosted
+  runners on the idle boxes, or the server itself building on push), never
+  with a "push less" rule.
+tags: [process, automation, cost]
+runs: 2
+expected_outcome: >-
+  First reads the billing usage per repo and SKU; public-repo minutes are
+  free, so the private client platform and the website are the burners. Moves
+  those off hosted runners - self-hosted runners on the Windows box or mini,
+  or a git remote on the Hetzner box whose push starts tests and the sandbox
+  build - builds only the newest push, and verifies the change (the first
+  run watched, or the usage re-read).
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    github actions quota hit 2000/2000 again mid-month. the org has a public
+    repo (mail app, CI on linux, mac and windows) and private repos (a client
+    platform with 5 pytest shards plus a deploy on every push, and the studio
+    website). the client platform runs on one Hetzner box, sandbox and
+    production. a windows box with WSL and a mac mini sit idle most of the
+    day. fix it so this stops happening.
+    This session has no shell: write what you check first and the fix.
+graders:
+  - name: measure-then-mechanism
+    type: llm
+    weight: 3
+    criteria: |
+      PASS if ALL hold: (1) it first measures which repos burn the quota
+      (billing usage per repo or SKU) instead of assuming, and states or
+      checks that public-repo minutes do not count, so the private repos are
+      the burners; (2) the fix removes the hosted minutes with a mechanism:
+      self-hosted runners on the idle boxes and/or the server itself running
+      tests and the sandbox build when it receives a push; (3) several quick
+      pushes build only the newest (superseded runs cancelled or skipped).
+      FAIL if: the primary fix is discipline (batch pushes, push once a day,
+      a reminder), buying minutes or a bigger plan, or it moves the public
+      repo off CI without measuring.
+  - name: verified-after-change
+    type: llm
+    weight: 1
+    criteria: |
+      PASS if the plan verifies the result instead of assuming it: the first
+      run on the new runners or pipeline is watched (a test push that builds),
+      or the billing usage is re-read after the change to confirm the private
+      repos stopped burning minutes. FAIL if nothing checks that the change
+      worked.

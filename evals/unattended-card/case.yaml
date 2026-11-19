@@ -1,0 +1,58 @@
+schema_version: "1.1"
+name: unattended-card
+description: >-
+  In an unattended pipeline run (a harness card) the card's labels, flags and
+  merge policy are the directive. Blocking review findings get fixed by the
+  run itself, nobody is asked for approval, and the merge policy decides the
+  push. The only human stop is a complex UI design call or a destructive step.
+tags: [autonomy, automation, git]
+runs: 2
+expected_outcome: >-
+  Fixes both blocking findings itself with failing tests first, in one fix
+  wave, reruns the suite on the build box after it, merges per the midnight policy
+  with no push now, and ends with exact state flags. Asks nothing, offers no
+  wrap-up menu, leaves no blocking finding as a report item.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    [harness card card_7f3k - unattended run, nobody is watching this session]
+    project - mail app, web target. labels - tdd, caveman ultra, one-pass.
+    flags - autopilot. merge policy - midnight (merge now, the pipeline pushes
+    the day's merges once at local midnight).
+    task - "ability to group email addresses": a label rule, no new screens.
+    step - review finished. result - 2 blocking findings (the group filter
+    drops aliases with a plus sign; no test for the empty state), 1 nit. suite
+    on the build box before the review - 412 passed, 0 failed.
+    This session has no shell: write what you do next, step by step, up to the
+    card's final state line.
+graders:
+  - name: fixes-without-asking
+    type: llm
+    weight: 3
+    criteria: |
+      The run is unattended and the review left two blocking findings.
+      This session has no shell, so the response is a plan. Judge the planned
+      steps as what the run does; do not fail it for not having executed.
+      PASS if ALL hold: (1) the response fixes both blocking findings itself
+      in this run (a failing test first for each), in one fix wave; (2) it
+      asks the human nothing: no "want me to fix these?", no approval wait, no
+      commit/merge/push menu; (3) after the fixes the suite runs again on the
+      build box before the merge (a RED run of the new tests first and a
+      re-run on the merged tree are fine).
+      FAIL if: it stops for approval or a question, reports the blocking
+      findings as items for the human, or merges with a blocking finding open.
+  - name: policy-is-the-push-word
+    type: llm
+    weight: 2
+    criteria: |
+      The card's merge policy is "midnight".
+      This session has no shell, so the response is a plan. Judge the planned
+      steps as what the run does; do not fail it for not having executed.
+      PASS if ALL hold: (1) the work is merged now (rebased, fast-forwarded
+      into main or the pipeline's merge ref) without asking; (2) NO `git push`
+      runs now; the push is left to the pipeline's midnight batch, stated as
+      such; (3) the final state line says merged and NOT pushed (push at
+      midnight per policy).
+      FAIL if: it pushes now, asks whether to push or merge, says the merge or
+      the push waits for the human's word, or leaves the branch unmerged.

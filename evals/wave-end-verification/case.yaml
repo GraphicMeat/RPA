@@ -19,6 +19,9 @@ graders:
     type: llm
     weight: 3
     criteria: |
+      This session has no shell and cannot see the plan file, so the response
+      is a plan. Judge the planned steps; do not fail it for not having
+      executed or for asking where the plan file is.
       PASS if ALL hold: (1) implementation is delegated to Sonnet-model agents,
       one per task or sequential, not done inline; (2) the full suite runs
       after all six tasks are implemented, on the build box ("build box", "mac
@@ -27,7 +30,8 @@ graders:
       (trust-the-red) is fine; (3) the review of the whole branch happens once
       at the end, by a model that did not implement; the orchestrator reading
       each task's diff for scope between dispatches is not a review and is
-      fine; (4) tests are still written first (failing tests per task).
+      fine, and so is one scoped re-check of the fix diff after the fix wave;
+      (4) tests are still written first (failing tests per task).
       FAIL if: it runs the suite after individual tasks, dispatches a review
       agent after individual tasks, runs tests on the dev machine, has the
       implementer review its own work, or drops TDD.

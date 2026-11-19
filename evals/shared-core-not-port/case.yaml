@@ -1,0 +1,50 @@
+schema_version: "1.1"
+name: shared-core-not-port
+description: >-
+  A second platform reuses the first one's engine and components through a
+  shared core instead of re-implementing features one by one. Duplication is
+  cut first, and features that cannot exist on the platform show an
+  "available on desktop" message.
+tags: [architecture, decisions, minimalism]
+runs: 2
+expected_outcome: >-
+  Inventories desktop settings against mobile, cuts the forked account setup
+  and settings code first, exposes the one Rust engine to mobile (UniFFI or a
+  shared package) and reuses the existing settings components and design
+  instead of writing mobile copies. The four desktop-only features appear on
+  mobile as an "available on desktop" message. Failing tests first.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    mail app. desktop is Tauri - a Rust engine plus a React UI. the mobile app
+    (iOS, Android) was started as a separate UI and re-implements account
+    setup and settings; appearance settings and half of the others are missing
+    on mobile. implement the missing settings on mobile.
+    facts - cleanup, backup, time capsule and migration need the desktop
+    filesystem and cannot work on a phone.
+    This session has no shell: write the plan and the failing tests you write
+    first.
+graders:
+  - name: reuse-not-port
+    type: llm
+    weight: 3
+    criteria: |
+      PASS if BOTH hold: (1) the plan does not write each missing setting a
+      second time for mobile: mobile reuses the desktop's existing settings
+      components / definitions and the one engine through something shared
+      (UniFFI bindings, a shared crate, package or registry); (2) mobile's
+      forked account setup and settings code is removed inside this plan,
+      before or while the missing settings are added, not left for later.
+      An inventory of desktop settings against mobile, or a parity test, is
+      a plus.
+      FAIL if: the plan builds a parallel mobile implementation setting by
+      setting, or leaves de-duplication as an optional later cleanup.
+  - name: desktop-only-message
+    type: llm
+    weight: 1
+    criteria: |
+      PASS if cleanup, backup, time capsule and migration are visible on
+      mobile as a clear "available on desktop" message (wording may differ).
+      FAIL if they are ported to mobile, or hidden / filtered out of the
+      mobile UI with no message.

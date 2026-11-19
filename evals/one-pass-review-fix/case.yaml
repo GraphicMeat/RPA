@@ -1,0 +1,62 @@
+schema_version: "1.1"
+name: one-pass-review-fix
+description: >-
+  "Review and fix in one go" means findings that surface mid-run (task reports,
+  automated security reviews) are parked, not dispatched; after the last task
+  there is ONE whole-branch review, ONE fix wave and ONE confirming suite run
+  with the full log kept.
+tags: [orchestration, testing, cost]
+runs: 2
+expected_outcome: >-
+  Parks both findings in the ledger and dispatches task 4 next. After task 7,
+  one suite run on the build box with the whole log captured to a file and
+  every failure listed, one whole-branch review by a model that did not
+  implement, then one fix wave covering parked findings, review findings and
+  test failures together, then one confirming run. No fix or review dispatch
+  between tasks.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    plan docs/plans/2026-11-07-mobile-plan-3.md, 7 tasks, subagent-driven,
+    sonnet agents, tdd. review and fix tasks in one go, after everything
+    finishes.
+    state now: task 3 of 7 just reported done. its report lists one finding it
+    did not fix ("restore does not rebind the account after import") and the
+    automated security review of task 2 flagged a missing auth check on one
+    route. tasks 4-7 not started.
+    This session has no shell: write what you do right now and the sequence up
+    to the merge - what gets dispatched when, when the review runs, when fixes
+    run, when suites run and where, and how failures are collected.
+graders:
+  - name: park-then-one-fix-wave
+    type: llm
+    weight: 3
+    criteria: |
+      The user said "review and fix tasks in one go, after everything finishes".
+      This session has no shell, so the response is a plan. Judge the planned
+      steps as what the run does; do not fail it for not having executed.
+      PASS if ALL hold: (1) right now no fix agent and no review agent is
+      dispatched for the two findings; they are recorded (ledger, parked list,
+      plan note) and task 4 is dispatched next; (2) after task 7 there is ONE
+      review of the whole branch by a model that did not implement; (3) the
+      parked findings, the review findings and any test failures are fixed
+      together in ONE fix wave, not one dispatch plus re-review per finding. A
+      single scoped re-check after the fix wave is fine.
+      FAIL if: a fix or follow-up task for either finding is dispatched between
+      build tasks (including "because it is a security finding"), a review runs
+      per task, or the plan is a review -> fix -> re-review loop per finding.
+  - name: one-run-full-log
+    type: llm
+    weight: 2
+    criteria: |
+      PASS if ALL hold: (1) the full suite runs on the build box (build box,
+      mac mini, anyjob/minijob/testq) after all tasks are implemented, not per
+      task and not on the local machine; one RED run of the new tests before
+      implementation is fine; (2) the whole output is kept (written to a file,
+      or failures extracted on the box), not cut with `tail`/`head`, and every
+      failure is listed before any fix starts; (3) all failures are fixed in
+      the same wave, followed by ONE confirming run (repeating only if that
+      run is red is fine).
+      FAIL if: the plan is run -> fix one -> run -> fix one, the log is
+      truncated with tail, or suites run on the dev machine.

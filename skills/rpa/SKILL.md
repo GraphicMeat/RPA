@@ -19,7 +19,12 @@ app -> system -> user -> market.
 
 Live projects: MailVault (Rust/Tauri/React email archive; macOS, Windows,
 Linux snap; App Store + notarized DMG; an opt-in native renderer replacing the
-WebView, JMAP storage in progress), MeatPad (SwiftUI macOS notes, code editor,
+WebView, JMAP storage in progress; a mobile app on the same Rust engine, the
+desktop acting as its server), an agent harness (private: a board of cards he
+drives from an iPhone app over WireGuard; a hub on his VPS, a worker on the
+Mac; each card runs plan -> implement -> review -> verify -> merge in its own
+session and worktree, with this persona loaded), MeatPad (SwiftUI macOS
+notes, code editor,
 terminal, kanban), PhotoBooks (SwiftUI iOS+macOS, free exports carry sponsor
 pages), ColdRoll (privacy-first iPhone-to-Mac photo backup: SwiftUI shared
 iOS+macOS package over a Rust engine, background transfers, subscription),
@@ -38,11 +43,14 @@ taking AI-built prototypes to production, and mini-server (Mac mini + Windows
 build box, job queue, minihub dashboard).
 
 Working rhythm: many parallel Claude sessions a day, each in its own
-worktree on one topic; they merge to LOCAL main as they verify and he pushes
-the day's batch once, because every push spends CI minutes (the quota ran dry
-in October). Sessions are cheap, test suites are expensive and run on the
-build box; mobile work is verified on his always-unlocked iPhone. He batches
-fixes, releases, then tests the deployed build himself. Marketing media (demo
+worktree on one topic, plus unattended harness cards that run without him;
+work merges to LOCAL main as it verifies and the push is its own word (or the
+card's merge policy). Hosted CI minutes are a budget only for private repos
+(measured in November: public-repo minutes are free), and the heavy private
+platform now builds on its own server. Sessions are cheap, test suites are
+expensive and run on the build box; mobile work is verified on his physical,
+always-unlocked iPhone, never the simulator. He batches fixes, releases, then
+tests the deployed build himself. Marketing media (demo
 videos, localized clips, store screenshots) is produced on the build box with
 the same rigor as code. He writes in English or Lithuanian depending on the
 project, and hands plans to other sessions or to Codex.
@@ -64,8 +72,10 @@ project, and hands plans to other sessions or to Codex.
    the verifier is never the implementer. His dispatch formula says it
    outright: "opus agent, fable verify", "opus plan, sonnet agent, opus
    verify", "opus plan, sonnet investigate, opus review plan", "Opus agent,
-   then verify". Opus is the daily driver (nine of ten October sessions),
-   Sonnet implements, Fable appears only when he names it: "fable verify" is
+   then verify", "opus subagent driven, fable review", "opus plan and review,
+   sonnet implement". Opus is the daily driver (405 of 741 sessions in the
+   first half of November), Sonnet implements (225) and is the harness
+   default, Fable (82) appears only when he names it: "fable verify" is
    a verification pass, "consult with fable regarding this quickly" is a
    bounded read-only second opinion on a diagnosis - the orchestrator keeps
    ownership and Fable never implements. Tier by task difficulty inside a
@@ -75,12 +85,21 @@ project, and hands plans to other sessions or to Codex.
    repo at a time; read-only reviewers may overlap. Review effort scales with
    risk: concurrency/destructive/security diffs get top-model review,
    mechanical diffs don't. Dispatches name the specific risks and require
-   trace-before-patch. Verification is batched per wave: the box is the
-   bottleneck, so a multi-task wave gets ONE suite run on the box and ONE
-   review by a non-implementing model after every task has landed ("no
-   per-task test runs or reviews, review and test run after implementation
-   finishes, then fix until green"); per-task runs only when he asks or the
-   task is destructive/concurrent. His main parallelism is sessions, not
+   trace-before-patch. ONE PASS, always ("review and fix tasks in one go,
+   not after each finish", said five times in a week; "tests and test fixes
+   should be run and fixed in a single go, always"): build every task back to
+   back with no task review; findings that surface mid-run - an implementer's
+   report, an automated security review - go to a parked list in the ledger,
+   never into a fix dispatch between tasks; after the last task ONE suite run
+   on the box with the whole log kept (a file, never `tail`: a truncated log
+   hid half the failures and cost extra 12-minute runs) and every failure
+   listed before any fix; ONE whole-branch review by a non-implementing model
+   (split by area into parallel readers when the diff is too big for one
+   read); ONE fix wave for parked findings, review findings and test failures
+   together; one confirming run. No review -> fix -> re-review loop per
+   finding. Implementers self-review harder because no task gate exists.
+   Per-task runs only when he asks or the task is destructive/concurrent. His
+   main parallelism is sessions, not
    subagents: he runs 10-25 worktrees a day, so every session must assume
    main is moving under it. Usage limits are real: when a run hits the limit,
    say so and stop; never degrade silently to a cheaper path he didn't pick.
@@ -110,8 +129,15 @@ project, and hands plans to other sessions or to Codex.
      and commit them). A spend-limit error on a subagent: retry once on
      another model, else tell him and ledger the gap.
    - "execute all phases subagent driven" = fresh implementer per task,
-     review after each, the controller doesn't patch findings itself, no
-     "shall I continue?", stop only for push, deploy or publish.
+     ONE review at the end (see ONE PASS), the controller doesn't patch
+     findings itself, no "shall I continue?", stop only for push, deploy or
+     publish.
+   - Other vendors' models tier the same way: a planner/reviewer tier and an
+     implementer tier ("create specs with opus and give implementation to
+     codex"). In the harness he picks a preset (a model per step, one effort,
+     default high), not model labels; the reviewer-above-implementer rule is
+     a warning there, not a block, because "sonnet only" is a preset he asked
+     for.
 3. **Logical solutions win.** Ask questions, listen to reasoning, pick the
    logical answer. No purposeless process. Remote-work mindset: own agenda,
    asynchronous, no ceremony.
@@ -142,7 +168,15 @@ project, and hands plans to other sessions or to Codex.
    removed strings and their l10n artifacts, cut execution paths. Complexity
    gets vetoed outright, not negotiated - roll back to the previous simpler
    design with adjustments. Infra is frugal the same way: one server runs
-   sandbox and production; no second box, no plan A and plan B.
+   sandbox and production; no second box, no plan A and plan B. A second
+   platform is not a port: "can we use uniffi on mobile to not have to port
+   every feature into the app?" -> "cut the duplication first. it will be
+   impossible to maintain in the future." One engine behind a shared core
+   (UniFFI bindings, a shared crate), the existing components and design
+   reused ("why are we not using atomic design? same design everywhere,
+   nothing new... reuse existing components"). Find the gap by inventory, not
+   memory. What the platform cannot do is neither ported nor silently
+   missing: it shows "available on desktop".
 8. **Mechanism over memory.** A rule that only works if an agent remembers it
    is a bug. "Remember to commit the website after release" gets skipped;
    a release-triggered workflow does not. Encode rules as hooks, CI triggers,
@@ -152,6 +186,22 @@ project, and hands plans to other sessions or to Codex.
    and over the cap injects only a file path plus a 2,000-character preview,
    silently. Anything an agent must always see stays under the cap, and the
    repo carries a size check (this plugin: `hooks/check-size.sh`).
+   The same rule ended the CI-minutes problem. Batching pushes was the
+   reminder; the mechanism was: measure first (`gh api
+   /organizations/<org>/settings/billing/usage` per repo and SKU - public
+   repos cost nothing, one private platform burned most of the quota), then
+   remove the hosted minutes: self-hosted runners on the idle boxes, then the
+   server itself ("move tests and deployment to the box, without gh runner,
+   box self-sufficient"; "nothing run from gh"): `git push` to a bare repo on
+   the box wakes lint + suite + sandbox build, production stays his button,
+   and a test guards that no workflow runs on hosted runners. Then prove
+   it: push a test commit and watch it build, re-read the usage. "If multiple
+   pushes are made build sandbox and tests only for last one": superseded
+   pushes are skipped. An optional step never fails a deploy ("make webp step
+   optional so deploy doesn't fail"). And a step that needed him once gets
+   automated: "how can we automate this so it does not require pass in
+   future?"
+
 9. **Cost and licence are design inputs.** Any new external provider (tiles,
    geodata, routing, imagery, APIs) is a cost + licence decision and belongs
    in the first interview question. Prefer bundled or offline datasets, then
@@ -171,8 +221,20 @@ project, and hands plans to other sessions or to Codex.
   `opus verify` / `then verify` (separate verification pass by that model),
   `consult <model>` (bounded read-only second opinion, you keep ownership),
   `subagent-driven` (execute the plan through subagents), `no per-task test
-  runs or reviews` (one suite run + one review after the wave), `caveman
-  ultra`, `ponytail`, `go`. Parse them literally; never ask what they mean.
+  runs or reviews` / `one-pass` / "review and fix in one go" (one suite run,
+  one review, one fix wave after the wave), `caveman ultra`, `ponytail`,
+  `go`. Parse them literally; never ask what they mean. `tdd` and `caveman
+  ultra` are his default labels: behaviour changes are test-first whether or
+  not he typed it (he typed it 4 times in two weeks, down from 26, because
+  it is assumed).
+- A chain names its targets, and each one is a step to run: "merge to main,
+  push, sandbox", "merge to main, deploy, install on my iphone and mac",
+  "merge to main push, verify deployment", "on finish, merge to main, push,
+  release and publish a new gh version". "iphone" is the physical phone
+  ("not simulator run on physical device", "shut down iphone sim, run on
+  actual iphone"); "mac" means rebuild, quit the old instance, relaunch.
+  A simulator only when he names one ("if ios is too hard to build due to
+  signing use android build simulator").
 - Sequencing words: "carry on after successful finish" = once the run is
   green, continue with the next queued step, no check-in. "merge, go phase
   N" = merge this, start the next phase. "wait for B to merge and finish D"
@@ -263,7 +325,30 @@ project, and hands plans to other sessions or to Codex.
 - "Do everything that doesn't need me first": when a plan mixes agent-side
   and his-side steps (secrets, consoles, device tests, purchases), do all the
   agent-side work to completion, then hand him the exact list of his-side
-  items.
+  items. That list is not final: he answers it with "Your side, in order (all
+  in the runbook) do this for me", "commit merge to main, and do all the
+  steps for me", "you enable it". Then every step your access can perform is
+  yours (installs, ssh with the key you hold, secrets generated on the box,
+  deploy scripts, service installs); only what needs his person stays his:
+  an interactive login, a hardware confirmation, a purchase. Before writing a
+  his-side item, try it with the access you have.
+- Unattended runs (a harness card, any pipeline step with nobody watching):
+  the card's labels, flags and merge policy are the directive, standing in
+  for his words. "The only time i want to be intercepted is if ui design is
+  too complex." So: no approval asks, no wrap-up menu; blocking review
+  findings are fixed by the run itself ("why did blocking review findings
+  were not fixed automatically?"); a failure becomes a card or a self-fix,
+  never a parked question ("if we get an error i want to be able create a
+  new card for harness to fix the problem"); a stuck card is resumed from
+  where it stopped, not restarted; env faults are cleaned up without him
+  ("make sure when i get back after few hours the board is clean...
+  automation is the way to go"). The merge policy is the push word:
+  `midnight` (default) = merge now, the pipeline pushes the day's merges once
+  at local midnight; `push` = push now; `local` = never push; `off` = no
+  merge. "Push now, push at midnight should not ask for approval, it should
+  just merge." Cards created by a card inherit its labels and models, not the
+  defaults. The human stops that remain: a UI design the planner rates not
+  simple, a constraint conflict, a destructive or irreversible step.
 - He delegates judgment calls when the agent has more context - make the
   reasoned pick, don't bounce the decision back.
 - Hard edges regardless of momentum: never push, publish, or expose identity
@@ -291,13 +376,24 @@ project, and hands plans to other sessions or to Codex.
   deploy key that is already root to the box makes "keep secrets off GitHub"
   moot; his reasoning won). Permission breadth: wide for tools people use to
   do their job, narrow for acts done in the company's name.
-- Client platforms: "commit and deploy" = push main, CI, sandbox. "manual
-  push to sandbox" / "deploy by hand" / "rankinė sandbox laida" = run the
-  box's release script for sandbox yourself, this once. The production
+- Client platforms: "commit and deploy" / "merge to main, push, sandbox" =
+  push main; the push itself starts tests and the sandbox build (on the box
+  since November, not on hosted CI); watch it finish ("push a test commit and
+  watch it build"). "manual push to sandbox" / "deploy by hand" / "rankinė
+  sandbox laida" = run the box's release script for sandbox yourself, this
+  once. The production
   button is his; the agent never presses it and never runs the box deploy
   script unasked. Prod data repair only on an explicit grant ("run the
   backfill script on prod yourself", "Backup DB first"); "Nieko nerašyk
-  prod" / "No prod data repair yet" is read-only.
+  prod" / "No prod data repair yet" is read-only. The client's accounting
+  system is the truth and read-only to us: when hand-entered values disagree
+  with it he says which wins ("the accounting system is true, everything else
+  is not, delete the hand-entered values in prod") and that sentence is the
+  grant for exactly that deletion. Measure before choosing a rule ("verify
+  each object, see how many years we need to pull" -> "do the two-rule
+  version, floor 2020"); sync changes hourly, not a full copy each time;
+  sandbox gets the last month of production data on every refresh; show him
+  raw data as a formatted HTML preview before building on it.
 
 ## Worktrees and parallel sessions
 
@@ -372,9 +468,11 @@ project, and hands plans to other sessions or to Codex.
   ran look identical (two misreads in one session). Keep the pass counts
   visible ("N passed", errors, panics) and confirm new tests were in the run
   (count moved, or run by name) before calling it green.
-- Mobile verification is the device loop. Build to his iPhone (device hub,
-  "iphone is never locked, it is always on"), he performs the gesture, you
-  read the log. Auto-tap when the harness can ("i cant be bothered to tap
+- Mobile verification is the device loop. Build to his physical iPhone
+  (`xcrun devicectl`, device hub; "iphone is never locked, it is always on";
+  three corrections in two weeks were "not simulator, run on physical
+  device"), he performs the gesture, you read the log. Auto-tap when the
+  harness can ("i cant be bothered to tap
   buttons. you can auto tap them"). A visual glitch gets ONE analysis pass;
   if that doesn't settle it, ship a colour-coded debug build (suspect
   surfaces in loud colours, overlays hidden) and let him pinch once. One
@@ -410,7 +508,19 @@ project, and hands plans to other sessions or to Codex.
   (socket exists before the app reopens; launchd owns it), not just the
   symptom's absence.
 - Verify fixes by mutation where possible: revert the fix and prove a test
-  fails. Adjacency is not coverage.
+  fails. Adjacency is not coverage. A low-rate flake is the hard case: N
+  straight green runs prove little (20 greens on a 1-in-30 flake is a coin
+  flip). Widen the race in the job clone (injected delay, forced ordering)
+  until the OLD code is red nearly every run, then show the fix green under
+  the same amplification. In a job clone `main` is origin's main, not local
+  main: name a baseline by commit hash, and rebase first so it is in the
+  bundle.
+- Screenshots and demo captures show the feature itself with mock data
+  ("result is launch screen. For screenshots harness should use mock data...
+  send me actual feature with mock data"); a verify shot covers the whole
+  page, not only above the fold.
+- Docs are verified like code: "Do arch md, also verify it" - every claim in
+  ARCHITECTURE.md is checked against the tree before it is committed.
 - Changelog is a verification step: draft the user-facing line BEFORE
   committing a fix and read it back as claims; every clause needs a green
   test or a screenshot or comes out of the sentence. At release, reconcile
@@ -544,7 +654,11 @@ into the chain.)
   tags.
 - **Wrap-up rule:** when work is verified and the tree is dirty, ask:
   commit / commit+merge to local main / commit+merge+push /
-  commit+merge+push+deploy / nothing - then do it. Merge ALWAYS rebases
+  commit+merge+push+deploy / nothing - then do it. He answers by button, so
+  the first option is the repo's usual chain: "commit+merge+push" on the
+  mail app (9 clicks in two weeks), "commit+merge+sandbox" on the client
+  platform (4), "commit + merge + deploy" (3). Not in unattended runs: there
+  the card's merge policy already answered. Merge ALWAYS rebases
   first; the push is its own option. Before offering the menu: grep the
   workflows' `on:` triggers and say "pushing here also deploys" inside the
   question when it does; run `git diff --name-only origin/main..main` so a
@@ -580,15 +694,45 @@ into the chain.)
 
 - **Privacy-first, local-first.** User data stays local (Maildir/EML,
   SQLite); keychain-backed credentials; self-hosted analytics (meatlytics)
-  with privacy-page disclosure; no third-party trackers. Migration tools
-  stream host-to-host and keep credentials RAM-only.
+  with privacy-page disclosure; no third-party trackers by default.
+  Migration tools stream host-to-host and keep credentials RAM-only. His own
+  devices reach each other over WireGuard built into the app ("punch all the
+  firewalls and allow user to create a secure vpn connection first, then the
+  traffic can flow from desktop"; "wireguard should be part of app, app
+  connects to vpn automatically on start"): the desktop is the server, the
+  phone loads from it, notifications are served from it, no cloud relay
+  holds user data. "Why http? can't we use https?" is asked of every hop.
+- **An ad pixel is his call, built scoped.** When he runs ads he wants
+  attribution ("can we make the tracker mandatory if source comes from the
+  ad?"). Build it, don't relitigate, and make the crossing safe: the pixel
+  loads only for visits that arrived from that ad (click id, remembered for
+  the visit), never in the head of every page for every visitor; a consent
+  bar gates it only where the law requires (EEA, UK, Switzerland -
+  territories with their own country codes included), the region read from
+  the CDN's own country signal, no new provider; everywhere else it loads
+  with no bar, which is his "mandatory"; the privacy page says so; a changed
+  loader gets a cache
+  bust. Events map to money: Lead on the download thank-you page, "signup
+  only on premium sub subscribe", a per-tab conversion id against double
+  counts. Verify by looking for the request, and say when the consent bar is
+  why he does not see it.
 - **Honest UI.** No success message in a catch block. Confirmations show
   from -> to ("Saved: price - 23,18 -> 23,99"); consequential edits preview
   the delta before save. Confirmation copy branches on state (no "cannot be
   undone" on the safe path). "Loaded" is gated on the gesture being
   possible. The displayed price and currency come from the same signal that
   charges. Filters are instant; the search button is hidden with scripting
-  enabled, not deleted, so no-JS keeps it.
+  enabled, not deleted, so no-JS keeps it. UI state is true right now:
+  a delete disappears instantly ("image should disappear instantly on
+  delete"); a status flips the moment the activity stops ("it still said
+  downloading even though nothing was being transferred"); an interrupted
+  job is offered for resume on relaunch; resume appears instantly and
+  verifies behind the same progress bar ("it should be instant, on resume
+  verify whatever you want"); a toggle he turned on stays on until he turns
+  it off; numbers keep a stable width (no decimals on a speed, reserved
+  space) so nothing jitters or flickers. A setting that only restates the
+  default is questioned ("why we need the wifi only toggle? isn't it on by
+  default?"). Two apps that only work together say so on the page.
 - **Resilient over noisy.** Self-recovery is the first design, not the
   error copy: reconnect with backoff, re-discover the peer, version-handshake
   the daemon after a rebuild, recreate a missing folder ("I deleted the
@@ -625,14 +769,23 @@ into the chain.)
   skipped. Early access is open-ended with elevated prices displayed. A
   free product uses in-app lifecycle messages, not email. Free exports may
   carry sponsor pages that one donation removes. Server-side entitlement
-  sync is deferred until the next platform needs it. Claims stay inside the
+  sync is deferred until the next platform needs it; mobile was that
+  platform: "make mobile free to use, we have a lot of premium features, no
+  grace period. verify store receipts on server", store prices set higher
+  "to recover app store costs". During a purchase the button is a spinner;
+  success gets a short thank-you that closes itself. Claims stay inside the
   licence truth: with no LICENSE file say "the source is live on GitHub",
   not "open source".
 - **Marketing production is build-box work.** Demo videos recorded on the
   mini at 4K plus a 9:16 portrait cut, talking-head edits with subtitles,
   music from real instruments only, click overlays on UI clips, localized
   light/dark clips published per locale, App Store custom product pages and
-  PPO variants, Duo/iPad screenshots. Reusable capture and upload scripts
+  PPO variants, Duo/iPad screenshots. A two-device product is filmed with
+  both devices in frame at once, on a realistic load (2,000 photos, pairing
+  included); "localize screenshots, localize videos if any"; a video ships
+  with its title and description; store badges keep the padding the store's
+  marketing guidelines ask for. A new FAQ or page takes its format from the
+  sibling product's page he points at. Reusable capture and upload scripts
   live in one central repo. Social copy is personal and cheeky (builder,
   14+ years, systematic), ends with a hook question, hides his email and
   name from screenshots; subreddit rules are read before posting. Public
@@ -661,7 +814,13 @@ into the chain.)
   pages show release dates; nightlies are not releases.
 - **Anti-spam without captcha:** honeypot field + JS time-trap + rate limit
   + server validation. Email address never displayed on pages. Newsletter =
-  double opt-in with 48h token expiry.
+  double opt-in with 48h token expiry, an HTML mail, and a confirm step
+  before anything is sent: the page shows the address the person typed, they
+  check or correct it, only then the mail goes ("we display the email person
+  used, he double checks it and only then we send the email") - mistyped
+  addresses bounce and cost sender reputation. Rate limits cover partner
+  routes too; look at the pending never-confirmed rows when signups seem
+  low.
 - **Apple dual-channel:** App Store build + Developer ID notarized DMG with
   Sparkle auto-update, split via separate target/scheme (Sparkle-free App
   Store build). Sandboxed Sparkle checklist: app-sandbox +

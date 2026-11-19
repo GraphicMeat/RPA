@@ -15,21 +15,33 @@ execution:
     This session has no shell: write the design and the list of failing tests
     you will write first.
 graders:
-  - name: recovery-first-then-human
+  - name: recovery-first
     type: llm
-    weight: 3
+    weight: 2
     criteria: |
-      PASS if ALL hold: (1) each failure gets automatic recovery before any UI:
-      pairing/connection retried with backoff or re-discovery, the app detects a
-      daemon version mismatch after a rebuild and restarts/relaunches the
-      service (or equivalent handshake), a missing download folder is recreated
-      or re-picked automatically; (2) what still surfaces is human copy that
-      names what happened AND the next step, not a raw code like
-      "connection_lost"; (3) repeated alerts are replaced by ONE consolidated
-      ongoing-issue surface (sheet, banner, view) that updates in place.
-      FAIL if: the fix is only better wording on the alerts, errors still
-      surface before a recovery attempt, alerts can repeat, or any surfaced
-      error lacks a next step.
+      PASS if each of the three failures gets automatic recovery before any
+      UI: pairing/connection is retried with backoff or re-discovery; the app
+      detects the daemon mismatch after a rebuild and restarts or relaunches
+      the service (or an equivalent version handshake); the missing download
+      folder is recreated (or re-picked) automatically.
+      FAIL if the fix is only better wording, or an error surfaces before a
+      recovery attempt on any of the three paths.
+  - name: human-copy-with-next-step
+    type: llm
+    weight: 1
+    criteria: |
+      PASS if whatever still surfaces after recovery fails is human copy that
+      names what happened AND what to do next, never a raw code such as
+      "connection_lost". FAIL if a surfaced error lacks a next step or shows
+      a raw code.
+  - name: one-issue-surface
+    type: llm
+    weight: 1
+    criteria: |
+      PASS if repeated alerts are replaced by ONE consolidated ongoing-issue
+      surface (a sheet, banner or view) that updates in place. FAIL if alerts
+      can still repeat, or the only change is de-duplicating alerts with no
+      single surface.
   - name: tests-first
     type: llm
     weight: 1

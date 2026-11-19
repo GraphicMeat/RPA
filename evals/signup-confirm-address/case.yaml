@@ -1,0 +1,45 @@
+schema_version: "1.1"
+name: signup-confirm-address
+description: >-
+  Newsletter bounces from mistyped addresses are fixed at the form. The page
+  shows the address the person typed and they confirm or correct it before
+  any mail is sent; double opt-in stays, no captcha.
+tags: [product, website, tdd]
+runs: 2
+expected_outcome: >-
+  Adds a review step between submit and send - the page shows the typed
+  address, the person confirms or edits it, only then the double opt-in mail
+  goes out. Works without JS, keeps honeypot and rate limit, no captcha, and
+  looks at the pending never-confirmed rows. Failing tests first.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    newsletter on the studio site, double opt-in already. bounces keep coming
+    back from the confirmation mail (typo addresses like gmial.com, mailboxes
+    that do not exist) and the sender reputation suffers. some real people
+    never confirm. fix. tdd.
+    This session has no shell: write the design and the failing tests you
+    write first.
+graders:
+  - name: confirm-step-before-send
+    type: llm
+    weight: 3
+    criteria: |
+      PASS if ALL hold: (1) the design adds a visible step before any mail is
+      sent where the page shows the address the person typed and they confirm
+      or correct it; the confirmation mail is sent only after that; (2)
+      double opt-in stays; (3) no captcha is added.
+      A typo suggestion ("did you mean gmail.com?") or an MX check on top is
+      fine, but neither alone counts as the step.
+      FAIL if: the fix is only server-side validation (regex, MX lookup,
+      disposable-domain list) or only a typo hint, a captcha is added, or
+      double opt-in is dropped.
+  - name: tests-first
+    type: llm
+    weight: 1
+    criteria: |
+      PASS if failing tests are listed first and include that no mail is sent
+      before the confirm step. Covering the no-JS path or the pending
+      never-confirmed rows is a plus. FAIL if tests are absent or planned
+      after the implementation.

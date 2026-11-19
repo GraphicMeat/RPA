@@ -1,0 +1,43 @@
+schema_version: "1.1"
+name: physical-device-not-simulator
+description: >-
+  "install on iphone" names his physical phone. The build goes to the
+  connected device, never the simulator, and "merge to main" in the same
+  chain still stops at local main.
+tags: [mobile, autonomy, git]
+runs: 2
+expected_outcome: >-
+  Rebases and fast-forwards LOCAL main with no push, builds from the merged
+  tree, installs and launches on the physical iPhone 17 Pro Max (devicectl or
+  the device hub) and the Mac app (old instance quit first), not a simulator,
+  without asking him to unlock anything. State line with exact flags.
+execution:
+  max_turns: 8
+  allowed_tools: [Skill]
+  prompt: |
+    paywall spinner fix is green on the mini (iOS + macOS app, shared SwiftUI
+    package). merge to main, install on iphone 17 pro max and mac
+    This session has no shell: write the exact steps and the state line you
+    will report.
+graders:
+  - name: physical-device
+    type: llm
+    weight: 3
+    criteria: |
+      This session has no shell, so the response is a plan. Judge the planned
+      steps as what the run does; do not fail it for not having executed.
+      PASS if ALL hold: (1) the iOS build is installed and launched on the
+      physical, connected iPhone (xcrun devicectl, a device destination by
+      id/name, or the device hub), explicitly not a simulator; (2) the Mac
+      app is rebuilt from the merged tree and relaunched, with the old
+      running instance quit; (3) it does not ask him to unlock the phone or
+      to run the install himself.
+      FAIL if: the plan targets a simulator (simctl, "iPhone 17 Pro Max
+      simulator"), leaves the device unspecified, or hands the install to him.
+  - name: merge-stays-local
+    type: llm
+    weight: 2
+    criteria: |
+      PASS if the merge is fetch/rebase then fast-forward into LOCAL main with
+      NO `git push`, no question about pushing, and the state line says NOT
+      pushed. FAIL if it pushes or asks whether to push.
